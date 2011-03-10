@@ -1,0 +1,202 @@
+body, select {
+  color: #7d7a7a;
+  font-family: 'trebuchet ms', verdana, sans-serif;
+	font-size: 14px;
+}
+
+a:link, a:visited, a:active { 
+  color: #5F83BA; 
+  text-decoration: none;
+}
+
+a:hover { 
+  color: #5f83ba; 
+  text-decoration: underline; 
+}
+
+img { 
+  border: none;
+}
+
+pre,
+code { 
+  font-size: 0.8em;
+  font-family: "lucida console", monospace;
+}
+
+pre {
+  background-color: #f8f8f8; 
+  padding: 10px;
+}
+
+select { 
+	font-weight: bold; 
+}
+
+.bar {
+  background-image: url('images/h_bar.gif');
+  background-repeat: repeat-x;
+  background-position: bottom right;
+}
+
+#header {
+  height: 50px;
+}
+
+#footer {
+  font-size: 0.75em;
+  padding-top: 12px;
+  background-image: url('images/h_bar.gif');
+  background-repeat: repeat-x;
+  background-position: top left;
+  height: 35px;
+  vertical-align: middle;
+  clear: both;
+}
+
+#logo {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  border: none;
+}
+
+.badges { 
+  float: right; 
+}
+
+#left_col, #content {
+  vertical-align: top;  
+}
+/*
+#left_col {
+  padding: 3px 3px 2em 3px;
+  margin-top: 2px;
+  width: 210px;
+  padding-right: 10px;
+  background-image: url('images/v_bar.gif');
+  background-repeat: repeat-y;
+  background-position: top right;
+}
+*/
+
+#left_col {
+  padding: 3px 3px 1em 3px;
+  margin-top: 2px;
+  width: 140px;
+  padding-right: 10px;
+  float: left;
+}
+
+#left_col h2 {
+  font-size: 1.0em;
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+}
+
+#left_col ul {
+  margin-top: 0.25em;
+  padding-left: 0px;
+}
+
+#left_col ul { margin-left: 0px; }
+
+#left_col ul li { list-style-position: inside; }
+
+#left_col iframe { margin-left: 40px; margin-top: 10px; }
+
+#content {
+  margin-left: 140px;
+  padding: 1em 1em 1em 2em;
+  min-width: 800px;
+  background-image: url('images/v_bar.gif');
+  background-repeat: repeat-y;
+  background-position: top left;
+}
+
+.message { 
+  margin-top: 1em;
+  border: 1px dashed #5E83BA;
+}
+
+#content li {
+  margin-top: 0.3em;
+  vertical-align: top;
+}
+
+#content>*>li { 
+  margin-right: 40px;  /* keep things in line */
+}
+
+#content h2 {
+  text-align: left;
+  color: #4A9166;
+}
+
+#content h3 { 
+  margin-top: 2em;
+}
+
+#content p {
+  text-align: justify;
+}
+
+#content table td { 
+  padding: 0.5em; 
+}
+
+#content table td.input { 
+  white-space: nowrap;
+  font-family: "lucida console", monospace; 
+  font-size: 0.8em;
+}
+
+#content textarea { 
+  padding: 4px;
+  width: 100%;
+  border: 1px dashed #5F83BA;
+}
+
+#content button { 
+  border: 1px dashed #5F83BA;
+  color: #7d7a7a;
+  font-family: 'trebuchet ms', verdana, sans-serif;
+}
+
+#content button:hover { 
+  background: #ccc;
+}
+
+#preview {
+	float: right; 
+	height: 800px; 
+	min-width: 400px; 
+	width: 60%; 
+	border: 1px solid #666; 
+	margin-left: 1em;
+}
+
+/* Method definitions from phpdoc */
+.method-definition {
+  background-image: url('images/h_bar.gif');
+  background-position: bottom center;
+  background-repeat: repeat-x;
+  padding: 10px 10px 20px 10px;  
+  margin-bottom: 1em;
+}
+
+.method-title {
+  color: #5F83BA;
+}
+
+.var-name,
+.method-name,
+.method-title {
+  font-weight: bold;
+}
+
+.var-type,
+.method-result {
+  color: #4A9166;
+  font-style: italic;  
+}

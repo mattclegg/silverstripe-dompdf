@@ -1,0 +1,191 @@
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/248/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src
+END
+byteorder.h
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/byteorder.h
+END
+ttf2ufm
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/ttf2ufm
+END
+runt1asm.c
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/runt1asm.c
+END
+ttf2pt1_convert.1
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/ttf2pt1_convert.1
+END
+ttf2pt1_x2gs.1
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/ttf2pt1_x2gs.1
+END
+COPYRIGHT
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/COPYRIGHT
+END
+CHANGES
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/CHANGES
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/183/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/Makefile
+END
+ttf.c
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/210/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/ttf.c
+END
+FONTS.hpux.html
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/FONTS.hpux.html
+END
+windows.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/windows.h
+END
+winbuild.bat
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/winbuild.bat
+END
+README.FIRST
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/README.FIRST
+END
+ttf.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/ttf.h
+END
+pt1.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/pt1.c
+END
+ttf2pt1.c
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/ttf2pt1.c
+END
+global.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/global.h
+END
+FONTS
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/FONTS
+END
+ft.c
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/ft.c
+END
+pt1.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/pt1.h
+END
+FONTS.html
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/FONTS.html
+END
+bitmap.c
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/bitmap.c
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/README
+END
+README.html
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/README.html
+END
+ttf2pt1.1
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/ttf2pt1.1
+END
+t1asm.c
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/t1asm.c
+END
+version.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/version.h
+END
+cygbuild.sh
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/cygbuild.sh
+END
+CHANGES.html
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/CHANGES.html
+END
+FONTS.hpux
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/FONTS.hpux
+END
+bdf.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/96/trunk/dompdf/lib/ttf2ufm/ttf2ufm-src/bdf.c
+END
