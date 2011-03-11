@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: null_frame_reflower.cls.php 216 2010-03-11 22:49:18Z ryan.masten $ */
+/* $Id: null_frame_reflower.cls.php 357 2011-01-30 20:56:46Z fabien.menager $ */
 
 /**
  * Dummy reflower
@@ -49,6 +49,6 @@ class Null_Frame_Reflower extends Frame_Reflower {
 
   function __construct(Frame $frame) { parent::__construct($frame); }
 
-  function reflow() { return; }
+  function reflow(Frame_Decorator $block = null) { return; }
   
 }

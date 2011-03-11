@@ -43,7 +43,7 @@
  * - bullet size proportional to font size, center position
  */
 
-/* $Id: list_bullet_renderer.cls.php 288 2010-07-27 21:12:02Z fabien.menager $ */
+/* $Id: list_bullet_renderer.cls.php 354 2011-01-24 21:59:54Z fabien.menager $ */
 
 /**
  * Renders list bullets
@@ -119,7 +119,7 @@ class List_Bullet_Renderer extends Abstract_Renderer {
       // Tested php ver: value measured in px, suffix "px" not in value: rtrim unnecessary.
       //$w = $frame->get_width();
       //$h = $frame->get_height();
-      list($width, $height) = getimagesize($img);
+      list($width, $height) = dompdf_getimagesize($img);
       $w = (((float)rtrim($width, "px")) * 72) / DOMPDF_DPI;
       $h = (((float)rtrim($height, "px")) * 72) / DOMPDF_DPI;
       

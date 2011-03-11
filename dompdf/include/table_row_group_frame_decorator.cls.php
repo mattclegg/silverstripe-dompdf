@@ -36,7 +36,7 @@
  * @package dompdf
  */
 
-/* $Id: table_row_group_frame_decorator.cls.php 216 2010-03-11 22:49:18Z ryan.masten $ */
+/* $Id: table_row_group_frame_decorator.cls.php 317 2010-10-06 13:06:57Z fabien.menager $ */
 
 /**
  * Table row group decorator
@@ -63,7 +63,7 @@ class Table_Row_Group_Frame_Decorator extends Frame_Decorator {
    *
    * @param Frame $child
    */
-  function split($child = null) {
+  function split($child = null, $force_pagebreak = false) {
 
     if ( is_null($child) ) {
       parent::split();

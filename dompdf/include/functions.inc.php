@@ -48,7 +48,7 @@
  * - relax windows path syntax, use uniform path delimiter. Used for background images.
  */
 
-/* $Id: functions.inc.php 313 2010-09-10 16:18:44Z fabien.menager $ */
+/* $Id: functions.inc.php 361 2011-02-16 21:03:05Z fabien.menager $ */
 
 function def($name, $value = true) {
   if (!defined($name)) {
@@ -56,6 +56,7 @@ function def($name, $value = true) {
   }
 }
 
+if ( !function_exists("pre_r") ) {
 /**
  * print_r wrapper for html/cli output
  *
@@ -67,7 +68,6 @@ function def($name, $value = true) {
  * @param bool $return
  *
  */
-if ( !function_exists("pre_r") ) {
 function pre_r($mixed, $return = false) {
   if ($return)
     return "<pre>" . print_r($mixed, true) . "</pre>";
@@ -85,6 +85,7 @@ function pre_r($mixed, $return = false) {
 }
 }
 
+if ( !function_exists("pre_var_dump") ) {
 /**
  * var_dump wrapper for html/cli output
  *
@@ -93,11 +94,43 @@ function pre_r($mixed, $return = false) {
  *
  * @param mixed $mixed variable or expression to display.
  */
-if ( !function_exists("pre_var_dump") ) {
 function pre_var_dump($mixed) {
   if ( php_sapi_name() !== "cli")
     echo("<pre>");
+    
   var_dump($mixed);
+  
+  if ( php_sapi_name() !== "cli")
+    echo("</pre>");
+}
+}
+
+if ( !function_exists("d") ) {
+/**
+ * generic debug function
+ *
+ * Takes everything and does its best to give a good debug output
+ *
+ * @param mixed $mixed variable or expression to display.
+ */
+function d($mixed) {
+  if ( php_sapi_name() !== "cli")
+    echo("<pre>");
+    
+  // line
+  if (is_array($mixed) && array_key_exists("tallest_frame", $mixed)) {
+    echo "<strong>LINE</strong>:\n";
+    foreach($mixed as $key => $value) {
+      if (is_array($value) || is_object($value)) continue;
+      echo "  $key:\t".var_export($value,true)."\n";
+    }
+  }
+  
+  // other
+  else {
+    var_export($mixed);
+  }
+  
   if ( php_sapi_name() !== "cli")
     echo("</pre>");
 }
@@ -198,7 +231,7 @@ function explode_url($url) {
 
     if ( isset($arr["path"]) && $arr["path"] !== "" ) {
       // Do we have a trailing slash?
-      if ( $arr["path"]{ mb_strlen($arr["path"]) - 1 } === "/" ) {
+      if ( $arr["path"][ mb_strlen($arr["path"]) - 1 ] === "/" ) {
         $path = $arr["path"];
         $file = "";
       } else {
@@ -279,21 +312,11 @@ function dec2roman($num) {
 
   $ret = "";
   switch (mb_strlen($num)) {
-
-  case 4:
-    $ret .= $thou[$num[3]];
-
-  case 3:
-    $ret .= $hund[$num[2]];
-
-  case 2:
-    $ret .= $tens[$num[1]];
-
-  case 1:
-    $ret .= $ones[$num[0]];
-
-  default:
-    break;
+    case 4: $ret .= $thou[$num[3]];
+    case 3: $ret .= $hund[$num[2]];
+    case 2: $ret .= $tens[$num[1]];
+    case 1: $ret .= $ones[$num[0]];
+    default: break;
   }
   return $ret;
 
@@ -307,12 +330,18 @@ function dec2roman($num) {
  */
 function is_percent($value) { return false !== mb_strpos($value, "%"); }
 
+/**
+ * Parses a data URI scheme
+ * http://en.wikipedia.org/wiki/Data_URI_scheme
+ * @param string $data_uri The data URI to parse
+ * @return array The result with charset, mime type and decoded data
+ */
 function parse_data_uri($data_uri) {
   if (!preg_match('/^data:(?P<mime>[a-z0-9\/+-.]+)(;charset=(?P<charset>[a-z0-9-])+)?(?P<base64>;base64)?\,(?P<data>.*)?/i', $data_uri, $match)) {
     return false;
   }
   
-  $match['data'] = urldecode($match['data']);
+  $match['data'] = rawurldecode($match['data']);
   $result = array(
     'charset' => $match['charset'] ? $match['charset'] : 'US-ASCII',
     'mime'    => $match['mime'] ? $match['mime'] : 'text/plain',
@@ -325,90 +354,100 @@ function parse_data_uri($data_uri) {
 /**
  * mb_string compatibility
  */
+if ( !function_exists("mb_strlen") ) {
+  
+  define('MB_OVERLOAD_MAIL', 1);
+  define('MB_OVERLOAD_STRING', 2);
+  define('MB_OVERLOAD_REGEX', 4);
+  define('MB_CASE_UPPER', 0);
+  define('MB_CASE_LOWER', 1);
+  define('MB_CASE_TITLE', 2);
 
-if ( !function_exists("mb_convert_encoding") ) {
-  function mb_convert_encoding($data, $to_encoding, $from_encoding='UTF-8') {
-    if (str_replace('-', '', strtolower($to_encoding)) == 'utf8') {
+  function mb_convert_encoding($data, $to_encoding, $from_encoding = 'UTF-8') {
+    if (str_replace('-', '', strtolower($to_encoding)) === 'utf8') {
       return utf8_encode($data);
     } else {
       return utf8_decode($data);
     }
   }
-}
-
-if ( !function_exists("mb_detect_encoding") ) {
-  function mb_detect_encoding($data, $encoding_list=array('iso-8859-1'), $strict=false) {
+  
+  function mb_detect_encoding($data, $encoding_list = array('iso-8859-1'), $strict = false) {
     return 'iso-8859-1';
   }
-}
-
-if ( !function_exists("mb_detect_order") ) {
-  function mb_detect_order($encoding_list=array('iso-8859-1')) {
+  
+  function mb_detect_order($encoding_list = array('iso-8859-1')) {
     return 'iso-8859-1';
   }
-}
-
-if ( !function_exists("mb_internal_encoding") ) {
-  function mb_internal_encoding($encoding=NULL) {
+  
+  function mb_internal_encoding($encoding = null) {
     if (isset($encoding)) {
       return true;
     } else {
       return 'iso-8859-1';
     }
   }
-}
 
-if ( !function_exists("mb_strlen") ) {
-  function mb_strlen($str, $encoding='iso-8859-1') {
-    if (str_replace('-', '', strtolower($encoding)) == 'utf8') {
-      return strlen(utf8_encode($str));
-    } else {
-      return strlen(utf8_decode($str));
+  function mb_strlen($str, $encoding = 'iso-8859-1') {
+    switch (str_replace('-', '', strtolower($encoding))) {
+      case "utf8": return strlen(utf8_encode($str));
+      case "8bit": return strlen($str);
+      default:     return strlen(utf8_decode($str));
     }
   }
-}
-
-if ( !function_exists("mb_strpos") ) {
+  
   function mb_strpos($haystack, $needle, $offset = 0) {
     return strpos($haystack, $needle, $offset);
   }
-}
-
-if ( !function_exists("mb_strrpos") ) {
+  
   function mb_strrpos($haystack, $needle, $offset = 0) {
     return strrpos($haystack, $needle, $offset);
   }
-}
-
-if ( !function_exists("mb_strtolower") ) {
-  function mb_strtolower($str) {
+  
+  function mb_strtolower( $str ) {
     return strtolower($str);
   }
-}
-
-if ( !function_exists("mb_strtoupper") ) {
-  function mb_strtoupper($str) {
+  
+  function mb_strtoupper( $str ) {
     return strtoupper($str);
   }
-}
-
-if ( !function_exists("mb_substr") ) {
-  function mb_substr($str, $start, $length=null, $encoding='iso-8859-1') {
+  
+  function mb_substr($string, $start, $length = null, $encoding = 'iso-8859-1') {
     if ( is_null($length) )
-      return substr($str, $start);
+      return substr($string, $start);
     else
-      return substr($str, $start, $length);
+      return substr($string, $start, $length);
   }
-}
-
-if ( !function_exists("mb_substr_count") ) {
-  function mb_substr_count($haystack, $needle) {
+  
+  function mb_substr_count($haystack, $needle, $encoding = 'iso-8859-1') {
     return substr_count($haystack, $needle);
   }
+  
+  function mb_encode_numericentity($str, $convmap, $encoding) {
+    return htmlspecialchars($str);
+  }
+  
+  function mb_convert_case($str, $mode = MB_CASE_UPPER, $encoding = array()) {
+    switch($mode) {
+      case MB_CASE_UPPER: return mb_strtoupper($str);
+      case MB_CASE_LOWER: return mb_strtolower($str);
+      case MB_CASE_TITLE: return ucwords(mb_strtolower($str));
+      default: return $str;
+    }
+  }
+  
+  function mb_list_encodings() {
+    return array(
+      "ISO-8859-1",
+      "UTF-8",
+      "8bit",
+    );
+  }
 }
 
-# Decoder for RLE8 compression in windows bitmaps
-# see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/bitmaps_6x0u.asp
+/** 
+ * Decoder for RLE8 compression in windows bitmaps
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/bitmaps_6x0u.asp
+ */
 function rle8_decode ($str, $width){
   $lineWidth = $width + (3 - ($width-1) % 4);
   $out = '';
@@ -445,8 +484,10 @@ function rle8_decode ($str, $width){
   return $out;
 }
 
-# Decoder for RLE4 compression in windows bitmaps
-# see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/bitmaps_6x0u.asp
+/** 
+ * Decoder for RLE4 compression in windows bitmaps
+ * see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/gdi/bitmaps_6x0u.asp
+ */
 function rle4_decode ($str, $width) {
   $w = floor($width/2) + ($width % 2);
   $lineWidth = $w + (3 - ( ($width-1) / 2) % 4);    
@@ -499,12 +540,13 @@ function rle4_decode ($str, $width) {
   return $out;
 } 
 
+if ( !function_exists("imagecreatefrombmp") ) {
+
 /**
  * Credit goes to mgutt 
  * http://www.programmierer-forum.de/function-imagecreatefrombmp-welche-variante-laeuft-t143137.htm
- * Modified by Fabien Ménager to support RGB555 BMP format
+ * Modified by Fabien Menager to support RGB555 BMP format
  */
-if ( !function_exists("imagecreatefrombmp") ) {
 function imagecreatefrombmp($filename) {
   try {
   // version 1.00
@@ -524,7 +566,7 @@ function imagecreatefrombmp($filename) {
   
   // read image header
   $meta += unpack('Vheadersize/Vwidth/Vheight/vplanes/vbits/Vcompression/Vimagesize/Vxres/Vyres/Vcolors/Vimportant', fread($fh, 40));
-
+  
   // read additional bitfield header
   if ($meta['compression'] == 3) {
     $meta += unpack('VrMask/VgMask/VbMask', fread($fh, 12));
@@ -648,6 +690,30 @@ function imagecreatefrombmp($filename) {
 }
 
 /**
+ * getimagesize doesn't give a good size for 32bit BMP image v5
+ * 
+ * @param string $filename
+ * @return array The same format as getimagesize($filename)
+ */
+function dompdf_getimagesize($filename) {
+  $size = getimagesize($filename);
+  
+  if ( $size[0] == null || $size[1] == null ) {
+    $data = file_get_contents($filename, null, null, 0, 26);
+    
+    if ( substr($data, 0, 2) === "BM" ) {
+      $meta = unpack('vtype/Vfilesize/Vreserved/Voffset/Vheadersize/Vwidth/Vheight', $data);
+      $size[0] = (int)$meta['width'];
+      $size[1] = (int)$meta['height'];
+    }
+  }
+  
+  return $size;
+}
+
+/**
+ * Converts a CMYK color to RGB
+ * 
  * @param int $c
  * @param int $m
  * @param int $y
@@ -698,9 +764,7 @@ if ( !function_exists("date_default_timezone_get") ) {
   function date_default_timezone_get() {
     return "";
   }
-}
-
-if ( !function_exists("date_default_timezone_set") ) {
+  
   function date_default_timezone_set($timezone_identifier) {
     return true;
   }
@@ -739,6 +803,9 @@ function record_warnings($errno, $errstr, $errfile, $errline) {
  * Print a useful backtrace
  */
 function bt() {
+  if ( php_sapi_name() !== "cli")
+    echo("<pre>");
+    
   $bt = debug_backtrace();
 
   array_shift($bt); // remove actual bt() call
@@ -757,6 +824,9 @@ function bt() {
     $i++;
   }
   echo "\n";
+  
+  if ( php_sapi_name() !== "cli")
+    echo("</pre>");
 }
 
 /**
@@ -774,10 +844,10 @@ function dompdf_debug($type, $msg) {
   }
 }
 
+if ( !function_exists("print_memusage") ) {
 /**
  * Dump memory usage
  */
-if ( !function_exists("print_memusage") ) {
 function print_memusage() {
   global $memusage;
   echo ("Memory Usage\n");
@@ -796,10 +866,10 @@ function print_memusage() {
 }
 }
 
+if ( !function_exists("enable_mem_profile") ) {
 /**
  * Initialize memory profiling code
  */
-if ( !function_exists("enable_mem_profile") ) {
 function enable_mem_profile() {
     global $memusage;
     $memusage = array("Startup" => memory_get_usage());
@@ -807,12 +877,12 @@ function enable_mem_profile() {
 }
 }
 
+if ( !function_exists("mark_memusage") ) {
 /**
  * Record the current memory usage
  *
  * @param string $location a meaningful location
  */
-if ( !function_exists("mark_memusage") ) {
 function mark_memusage($location) {
   global $memusage;
   if ( isset($memusage) )
@@ -820,21 +890,37 @@ function mark_memusage($location) {
 }
 }
 
+if ( !function_exists('sys_get_temp_dir')) {
 /**
  * Find the current system temporary directory
  *
  * @link http://us.php.net/manual/en/function.sys-get-temp-dir.php#85261
  */
-if ( !function_exists('sys_get_temp_dir')) {
-  function sys_get_temp_dir() {
-    if (!empty($_ENV['TMP'])) { return realpath($_ENV['TMP']); }
-    if (!empty($_ENV['TMPDIR'])) { return realpath( $_ENV['TMPDIR']); }
-    if (!empty($_ENV['TEMP'])) { return realpath( $_ENV['TEMP']); }
-    $tempfile=tempnam(uniqid(rand(),TRUE),'');
-    if (file_exists($tempfile)) {
-    unlink($tempfile);
-    return realpath(dirname($tempfile));
-    }
+function sys_get_temp_dir() {
+  if (!empty($_ENV['TMP'])) { return realpath($_ENV['TMP']); }
+  if (!empty($_ENV['TMPDIR'])) { return realpath( $_ENV['TMPDIR']); }
+  if (!empty($_ENV['TEMP'])) { return realpath( $_ENV['TEMP']); }
+  $tempfile=tempnam(uniqid(rand(),TRUE),'');
+  if (file_exists($tempfile)) {
+  unlink($tempfile);
+  return realpath(dirname($tempfile));
+  }
+}
+}
+
+if ( function_exists("memory_get_peak_usage") ) {
+  function DOMPDF_memory_usage(){
+    return memory_get_peak_usage(true);
+  }
+}
+else if ( function_exists("memory_get_peak_usage") ) {
+  function DOMPDF_memory_usage(){
+    return memory_get_usage(true);
+  }
+}
+else {
+  function DOMPDF_memory_usage(){
+    return "N/A";
   }
 }
 
@@ -842,7 +928,7 @@ if ( !function_exists('sys_get_temp_dir')) {
  * Affect null to the unused objects
  * @param unknown_type $object
  */
-function clear_object(&$object) {  
+function clear_object(&$object) {
   if ( is_object($object) ) {
     foreach (array_keys((array)$object) as $key) {
       clear_object($property);

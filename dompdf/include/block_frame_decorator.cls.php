@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: block_frame_decorator.cls.php 314 2010-09-14 11:35:41Z fabien.menager $ */
+/* $Id: block_frame_decorator.cls.php 358 2011-01-30 22:22:47Z fabien.menager $ */
 
 /**
  * Decorates frames for block layout
@@ -53,22 +53,25 @@ class Block_Frame_Decorator extends Frame_Decorator {
                      //                 y, w, h) )
   protected $_counters; // array([id] => counter_value) (for generated content)
   protected $_cl;    // current line index
+  
+  static protected $_initial_line_state = array(
+    "frames" => array(),
+    "wc" => 0,
+    "y" => null,
+    "w" => 0,
+    "h" => 0,
+    "left" => 0,
+    "right" => 0,
+    "tallest_frame" => null,
+    "br" => false,
+  );
 
   //........................................................................
 
   function __construct(Frame $frame, DOMPDF $dompdf) {
     parent::__construct($frame, $dompdf);
     
-    $this->_lines = array(array(
-      "frames" => array(),
-      "wc" => 0,
-      "y" => null,
-      "w" => 0,
-      "h" => 0,
-      "left" => 0,
-      "right" => 0,
-      "tallest_frame" => null,
-    ));
+    $this->_lines = array(self::$_initial_line_state);
     
     $this->_counters = array(self::DEFAULT_COUNTER => 0);
     $this->_cl = 0;
@@ -79,16 +82,7 @@ class Block_Frame_Decorator extends Frame_Decorator {
   function reset() {
     parent::reset();
     
-    $this->_lines = array(array(
-      "frames" => array(),
-      "wc" => 0,
-      "y" => null,
-      "w" => 0,
-      "h" => 0,
-      "left" => 0,
-      "right" => 0,
-      "tallest_frame" => null,
-    ));
+    $this->_lines = array(self::$_initial_line_state);
     
     $this->_counters = array(self::DEFAULT_COUNTER => 0);
     $this->_cl = 0;
@@ -103,6 +97,10 @@ class Block_Frame_Decorator extends Frame_Decorator {
     if ( isset($i) )
       return $cl[$i];
     return $cl;
+  }
+
+  function get_current_line_number() {
+    return $this->_cl;
   }
 
   function get_lines() { return $this->_lines; }
@@ -147,6 +145,11 @@ class Block_Frame_Decorator extends Frame_Decorator {
   function add_frame_to_line(Frame $frame) {
     $style = $frame->get_style();
     
+    if ( in_array($style->position, array("absolute", "fixed")) ||
+         (DOMPDF_ENABLE_CSS_FLOAT && $style->float !== "none") ) {
+      return;
+    }
+    
     $frame->set_containing_line($this->_lines[$this->_cl]);
     
     /*
@@ -171,13 +174,8 @@ class Block_Frame_Decorator extends Frame_Decorator {
       // Handle line breaks
       if ( $frame->get_node()->nodeName === "br" ) {
         $this->maximize_line_height( $style->length_in_pt($style->line_height), $frame );
-        $this->add_line();
-        return;
+        $this->add_line(true);
       }
-
-      // Add each child of the inline frame to the line individually
-      foreach ($frame->get_children() as $child)
-        $this->add_frame_to_line( $child );
 
       return;
     }
@@ -200,12 +198,12 @@ class Block_Frame_Decorator extends Frame_Decorator {
 
     // Debugging code:
     /*
-    pre_r("\nAdding frame to line:");
+    pre_r("\n<h3>Adding frame to line:</h3>");
 
     //    pre_r("Me: " . $this->get_node()->nodeName . " (" . spl_object_hash($this->get_node()) . ")");
     //    pre_r("Node: " . $frame->get_node()->nodeName . " (" . spl_object_hash($frame->get_node()) . ")");
     if ( $frame->get_node()->nodeName === "#text" )
-      pre_r($frame->get_node()->nodeValue);
+      pre_r('"'.$frame->get_node()->nodeValue.'"');
 
     pre_r("Line width: " . $this->_lines[$this->_cl]["w"]);
     pre_r("Frame: " . get_class($frame));
@@ -228,7 +226,7 @@ class Block_Frame_Decorator extends Frame_Decorator {
     if ( $frame->get_node()->nodeName === "#text")
       $current_line["wc"] += count(preg_split("/\s+/", trim($frame->get_text())));
 
-    $current_line["w"] += $w;
+    $this->increase_line_width($w);
     
     $this->maximize_line_height($frame->get_margin_height(), $frame);
   }
@@ -281,23 +279,18 @@ class Block_Frame_Decorator extends Frame_Decorator {
     }
   }
 
-  function add_line() {
+  function add_line($br = false) {
 
 //     if ( $this->_lines[$this->_cl]["h"] == 0 ) //count($this->_lines[$i]["frames"]) == 0 ||
 //       return;
 
+    $this->_lines[$this->_cl]["br"] = $br;
     $y = $this->_lines[$this->_cl]["y"] + $this->_lines[$this->_cl]["h"];
 
-    $this->_lines[ ++$this->_cl ] = array(
-      "frames" => array(),
-      "wc" => 0,
-      "y" => $y, 
-      "w" => 0, 
-      "h" => 0, 
-      "left" => 0, 
-      "right" => 0, 
-      "tallest_frame" => null,
-    );
+    $new_line = self::$_initial_line_state;
+    $new_line["y"] = $y;
+    
+    $this->_lines[ ++$this->_cl ] = $new_line;
   }
 
   //........................................................................
@@ -316,37 +309,46 @@ class Block_Frame_Decorator extends Frame_Decorator {
   // TODO: What version is the best : this one or the one in List_Bullet_Renderer ?
   function counter_value($id = self::DEFAULT_COUNTER, $type = "decimal") {
     $type = mb_strtolower($type);
-    if ( !isset($this->_counters[$id]) )
+    
+    if ( $id === "page" ) {
+      $value = $this->get_dompdf()->get_canvas()->get_page_number();
+    }
+    elseif ( !isset($this->_counters[$id]) ) {
       $this->_counters[$id] = 0;
-
+      $value = 0;
+    }
+    else {
+      $value = $this->_counters[$id];
+    }
+    
     switch ($type) {
 
     default:
     case "decimal":
-      return $this->_counters[$id];
+      return $value;
 
     case "decimal-leading-zero":
-      return str_pad($this->_counters[$id], 2, "0");
+      return str_pad($value, 2, "0");
 
     case "lower-roman":
-      return dec2roman($this->_counters[$id]);
+      return dec2roman($value);
 
     case "upper-roman":
-      return mb_strtoupper(dec2roman($this->_counters[$id]));
+      return mb_strtoupper(dec2roman($value));
 
     case "lower-latin":
     case "lower-alpha":
-      return chr( ($this->_counters[$id] % 26) + ord('a') - 1);
+      return chr( ($value % 26) + ord('a') - 1);
 
     case "upper-latin":
     case "upper-alpha":
-      return chr( ($this->_counters[$id] % 26) + ord('A') - 1);
+      return chr( ($value % 26) + ord('A') - 1);
 
     case "lower-greek":
-      return chr($this->_counters[$id] + 944);
+      return unichr($value + 944);
 
     case "upper-greek":
-      return chr($this->_counters[$id] + 912);
+      return unichr($value + 912);
     }
   }
 }

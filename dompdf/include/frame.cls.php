@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: frame.cls.php 313 2010-09-10 16:18:44Z fabien.menager $ */
+/* $Id: frame.cls.php 359 2011-02-05 12:15:06Z fabien.menager $ */
 
 /**
  * The main Frame class
@@ -154,6 +154,12 @@ class Frame {
   protected $_decorator;
   
   protected $_containing_line;
+  
+  /**
+   * Tells wether the frame was already pushed to the next page
+   * @var bool
+   */
+  public $_already_pushed = false;
   
   /**
    * Class destructor
@@ -355,15 +361,18 @@ class Frame {
    * 
    * @return float
    */
-  function get_margin_height() {      
-    return $this->_style->length_in_pt(array($this->_style->height,
-                                             $this->_style->margin_top,
-                                             $this->_style->margin_bottom,
-                                             $this->_style->border_top_width,
-                                             $this->_style->border_bottom_width,
-                                             $this->_style->padding_top,
-                                             $this->_style->padding_bottom),
-                                       $this->_containing_block["h"]);
+  function get_margin_height() {
+    $style = $this->_style;
+    
+    return $style->length_in_pt(array(
+      $style->height,
+      $style->margin_top,
+      $style->margin_bottom,
+      $style->border_top_width,
+      $style->border_bottom_width,
+      $style->padding_top,
+      $style->padding_bottom
+    ), $this->_containing_block["h"]);
   }
 
   /**
@@ -373,14 +382,31 @@ class Frame {
    * @return float
    */ 
   function get_margin_width() {
-    return $this->_style->length_in_pt(array($this->_style->width,
-                                     $this->_style->margin_left,
-                                     $this->_style->margin_right,
-                                     $this->_style->border_left_width,
-                                     $this->_style->border_right_width,
-                                     $this->_style->padding_left,
-                                     $this->_style->padding_right),
-                               $this->_containing_block["w"]);
+    $style = $this->_style;
+    
+    return $style->length_in_pt(array(
+      $style->width,
+      $style->margin_left,
+      $style->margin_right,
+      $style->border_left_width,
+      $style->border_right_width,
+      $style->padding_left,
+      $style->padding_right
+    ), $this->_containing_block["w"]);
+  }
+  
+  function get_break_margins(){
+    $style = $this->_style;
+    
+    return $style->length_in_pt(array(
+      //$style->height,
+      $style->margin_top,
+      $style->margin_bottom,
+      $style->border_top_width,
+      $style->border_bottom_width,
+      $style->padding_top,
+      $style->padding_bottom
+    ), $this->_containing_block["h"]);
   }
 
   /**
@@ -389,24 +415,28 @@ class Frame {
    * @return array
    */
   function get_padding_box() {
-    $x = $this->_position["x"] +
-      $this->_style->length_in_pt(array($this->_style->margin_left,
-                                        $this->_style->border_left_width),
-                                  $this->_containing_block["w"]);
-    $y = $this->_position["y"] +
-      $this->_style->length_in_pt(array($this->_style->margin_top,
-                                $this->_style->border_top_width),
-                          $this->_containing_block["h"]);
+    $style = $this->_style;
+    $cb = $this->_containing_block;
     
-    $w = $this->_style->length_in_pt(array($this->_style->padding_left,
-                                   $this->_style->width,
-                                   $this->_style->padding_right),
-                             $this->_containing_block["w"]);
+    $x = $this->_position["x"] +
+      $style->length_in_pt(array($style->margin_left,
+                                 $style->border_left_width),
+                           $cb["w"]);
+                           
+    $y = $this->_position["y"] +
+      $style->length_in_pt(array($style->margin_top,
+                                 $style->border_top_width),
+                           $cb["h"]);
+    
+    $w = $style->length_in_pt(array($style->padding_left,
+                                    $style->width,
+                                    $style->padding_right),
+                              $cb["w"]);
 
-    $h = $this->_style->length_in_pt(array($this->_style->padding_top,
-                                   $this->_style->height,
-                                   $this->_style->padding_bottom),
-                             $this->_containing_block["h"]);
+    $h = $style->length_in_pt(array($style->padding_top,
+                                    $style->height,
+                                    $style->padding_bottom),
+                             $cb["h"]);
 
     return array(0 => $x, "x" => $x,
                  1 => $y, "y" => $y,
@@ -420,27 +450,26 @@ class Frame {
    * @return array
    */
   function get_border_box() {
-    $x = $this->_position["x"] +
-      $this->_style->length_in_pt($this->_style->margin_left,
-                          $this->_containing_block["w"]);
+    $style = $this->_style;
+    $cb = $this->_containing_block;
+    
+    $x = $this->_position["x"] + $style->length_in_pt($style->margin_left, $cb["w"]);
                           
-    $y = $this->_position["y"] +
-      $this->_style->length_in_pt($this->_style->margin_top,
-                          $this->_containing_block["h"]);
+    $y = $this->_position["y"] + $style->length_in_pt($style->margin_top,  $cb["h"]);
 
-    $w = $this->_style->length_in_pt(array($this->_style->border_left_width,
-                                   $this->_style->padding_left,
-                                   $this->_style->width,
-                                   $this->_style->padding_right,
-                                   $this->_style->border_right_width),
-                             $this->_containing_block["w"]);
+    $w = $style->length_in_pt(array($style->border_left_width,
+                                    $style->padding_left,
+                                    $style->width,
+                                    $style->padding_right,
+                                    $style->border_right_width),
+                              $cb["w"]);
 
-    $h = $this->_style->length_in_pt(array($this->_style->border_top_width,
-                                   $this->_style->padding_top,
-                                   $this->_style->height,
-                                   $this->_style->padding_bottom,
-                                   $this->_style->border_bottom_width),
-                             $this->_containing_block["h"]);
+    $h = $style->length_in_pt(array($style->border_top_width,
+                                    $style->padding_top,
+                                    $style->height,
+                                    $style->padding_bottom,
+                                    $style->border_bottom_width),
+                              $cb["h"]);
 
     return array(0 => $x, "x" => $x,
                  1 => $y, "y" => $y,
@@ -476,6 +505,7 @@ class Frame {
     if ( is_null($this->_style) )
       $this->_original_style = clone $style;
     
+    //$style->set_frame($this);
     $this->_style = $style;
   }
   
@@ -726,7 +756,11 @@ class Frame {
       $tmp = htmlspecialchars($this->_node->nodeValue);
       $str .= "<pre>'" .  mb_substr($tmp,0,70) .
         (mb_strlen($tmp) > 70 ? "..." : "") . "'</pre>";
+    } elseif ( $css_class = $this->_node->getAttribute("class") ) {
+      $tmp = htmlspecialchars($css_class);
+      $str .= "CSS class: '$css_class'<br/>";
     }
+    
     if ( $this->_parent )
       $str .= "\nParent:" . $this->_parent->_node->nodeName .
         " (" . spl_object_hash($this->_parent->_node) . ") " .
@@ -771,7 +805,9 @@ class Frame {
           //"\ncount => " . $line["count"] . "\n".
           "\ny => " . $line["y"] . "\n" .
           "w => " . $line["w"] . "\n" .
-          "h => " . $line["h"] . "\n";
+          "h => " . $line["h"] . "\n" .
+          "left => " . $line["left"] . "\n" .
+          "right => " . $line["right"] . "\n";
       }
       $str .= "</pre>";
     }
@@ -811,8 +847,19 @@ class FrameList implements IteratorAggregate {
  */
 class FrameListIterator implements Iterator {
 
+  /**
+   * @var Frame
+   */
   protected $_parent;
+  
+  /**
+   * @var Frame
+   */
   protected $_cur;
+  
+  /**
+   * @var int
+   */
   protected $_num;
 
   function __construct(Frame $frame) {
@@ -826,12 +873,23 @@ class FrameListIterator implements Iterator {
     $this->_num = 0;
   }
 
+  /**
+   * @return bool
+   */
   function valid() {
     return isset($this->_cur);// && ($this->_cur->get_prev_sibling() === $this->_prev);
   }
+  
   function key() { return $this->_num; }
+  
+  /**
+   * @return Frame
+   */
   function current() { return $this->_cur; }
 
+  /**
+   * @return Frame
+   */
   function next() {
 
     $ret = $this->_cur;
@@ -853,11 +911,17 @@ class FrameListIterator implements Iterator {
  * @package dompdf
  */
 class FrameTreeList implements IteratorAggregate {
-
+  /**
+   * @var Frame
+   */
   protected $_root;
+  
   function __construct(Frame $root) { $this->_root = $root; }
+  
+  /**
+   * @return FrameTreeIterator
+   */
   function getIterator() { return new FrameTreeIterator($this->_root); }
-
 }
 
 /**
@@ -869,9 +933,15 @@ class FrameTreeList implements IteratorAggregate {
  * @package dompdf
  */
 class FrameTreeIterator implements Iterator {
-
+  /**
+   * @var Frame
+   */
   protected $_root;
   protected $_stack = array();
+  
+  /**
+   * @var int
+   */
   protected $_num;
   
   function __construct(Frame $root) {
@@ -883,11 +953,25 @@ class FrameTreeIterator implements Iterator {
     $this->_stack = array($this->_root);
     $this->_num = 0;
   }
-    
+  
+  /**
+   * @return bool
+   */
   function valid() { return count($this->_stack) > 0; }
+  
+  /**
+   * @return int
+   */
   function key() { return $this->_num; }
+  
+  /**
+   * @var Frame
+   */
   function current() { return end($this->_stack); }
 
+  /**
+   * @var Frame
+   */
   function next() {
     $b = end($this->_stack);
     

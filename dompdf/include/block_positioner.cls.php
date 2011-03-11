@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: block_positioner.cls.php 312 2010-09-08 16:50:01Z fabien.menager $ */
+/* $Id: block_positioner.cls.php 356 2011-01-28 08:56:10Z fabien.menager $ */
 
 /**
  * Positions block frames
@@ -54,12 +54,13 @@ class Block_Positioner extends Positioner {
 
   function position() {
     $frame = $this->_frame;
+    $style = $frame->get_style();
     $cb = $frame->get_containing_block();
     $p = $frame->find_block_parent();
     
     if ( $p ) {
-      $float = $frame->get_style()->float;
-      if ( !$float || $float === "none" ) {
+      $float = $style->float;
+      if ( !DOMPDF_ENABLE_CSS_FLOAT || !$float || $float === "none" ) {
         $p->add_line();
       }
       $y = $p->get_current_line("y");
@@ -68,6 +69,17 @@ class Block_Positioner extends Positioner {
       $y = $cb["y"];
 
     $x = $cb["x"];
+
+    // Relative positionning
+    if ( $style->position === "relative" ) {
+      $top =    $style->length_in_pt($style->top,    $cb["h"]);
+      //$right =  $style->length_in_pt($style->right,  $cb["w"]);
+      //$bottom = $style->length_in_pt($style->bottom, $cb["h"]);
+      $left =   $style->length_in_pt($style->left,   $cb["w"]);
+      
+      $x += $left;
+      $y += $top;
+    }
     
     $frame->set_position($x, $y);
   }

@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: image_renderer.cls.php 311 2010-09-05 20:02:01Z fabien.menager $ */
+/* $Id: image_renderer.cls.php 325 2010-11-07 18:05:59Z fabien.menager $ */
 
 /**
  * Image renderer
@@ -88,7 +88,7 @@ class Image_Renderer extends Block_Renderer {
     if (DEBUG_LAYOUT && DEBUG_LAYOUT_BLOCKS) {
       $this->_debug_layout($frame->get_border_box(), "blue");
       if (DEBUG_LAYOUT_PADDINGBOX) {
-        $this->_debug_layout($frame->get_padding_box(), "blue", array(0, 1));
+        $this->_debug_layout($frame->get_padding_box(), "blue", array(0.5, 0.5));
       }
     }
   }

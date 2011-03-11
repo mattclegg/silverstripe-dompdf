@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: inline_positioner.cls.php 315 2010-09-14 19:55:30Z fabien.menager $ */
+/* $Id: inline_positioner.cls.php 357 2011-01-30 20:56:46Z fabien.menager $ */
 /**
  * Positions inline frames
  *
@@ -65,11 +65,11 @@ class Inline_Positioner extends Positioner {
     if ( !$p )
       throw new DOMPDF_Exception("No block-level parent found.  Not good.");
 
-    $cb = $this->_frame->get_containing_block();
-    $style = $this->_frame->get_style();
-    $line = $p->get_current_line();
-    
     $f = $this->_frame;
+    
+    $cb = $f->get_containing_block();
+    $style = $f->get_style();
+    $line = $p->get_current_line();
 
     // Skip the page break if in a fixed position element
     $is_fixed = false;
@@ -89,17 +89,6 @@ class Inline_Positioner extends Positioner {
       $min_max = $f->get_reflower()->get_min_max_width();
       $initialcb = $f->get_root()->get_containing_block();
       $height = $style->length_in_pt($style->height, $initialcb["h"]);
-      
-      // If the frame doesn't fit in the current page, a page break occurs
-      // FIXME this breaks rendering in some cases
-      if ( $height !== "auto" && ($height > ($initialcb["h"]-$line["y"]*1.1) ) &&
-           !$f->get_dompdf()->get_tree()->get_root()->get_decorator()->is_full()) {
-        
-        if ( !Table_Frame_Decorator::find_parent_table($this->_frame) ) {
-          $f->split(null, true);
-          return;
-        }
-      }
       
       // If the frame doesn't fit in the current line, a line break occurs
       if ( $min_max["min"] > ($cb["w"]-$line["left"]-$line["w"]-$line["right"]) ) {

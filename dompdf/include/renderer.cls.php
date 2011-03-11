@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: renderer.cls.php 313 2010-09-10 16:18:44Z fabien.menager $ */
+/* $Id: renderer.cls.php 351 2011-01-19 20:27:02Z fabien.menager $ */
 
 /**
  * Concrete renderer
@@ -93,6 +93,26 @@ class Renderer extends Abstract_Renderer {
 
     $style = $frame->get_style();
     $display = $style->display;
+    
+    // Starts the CSS transformation
+    if ( $style->transform && is_array($style->transform) ) {
+      $this->_canvas->save();
+      list($x, $y, $w, $h) = $frame->get_padding_box();
+      $origin = $style->transform_origin;
+      
+      foreach($style->transform as $transform) {
+        list($function, $values) = $transform;
+        if ( $function === "matrix" ) {
+          $function = "transform";
+        }
+        
+        $values = array_map("floatval", $values);
+        $values[] = $x + $style->length_in_pt($origin[0], $style->width);
+        $values[] = $y + $style->length_in_pt($origin[1], $style->height);
+        
+        call_user_func_array(array($this->_canvas, $function), $values);
+      }
+    }
   
     switch ($display) {
       
@@ -159,13 +179,31 @@ class Renderer extends Abstract_Renderer {
       list($x, $y, $w, $h) = $frame->get_padding_box();
       $this->_canvas->clipping_rectangle($x, $y, $w, $h);
     }
+  
+    $page = $frame->get_root()->get_reflower();
     
-    foreach ($frame->get_children() as $child)
-      $this->render($child);
+    foreach ($frame->get_children() as $child) {
+      $child_style = $child->get_style();
+      
+      // Stacking context
+      if ( $child_style->z_index !== false && ($child_style->z_index !== "auto" || in_array($child_style->position, Style::$POSITIONNED_TYPES)) ) {
+        $z_index = ($child_style->z_index === "auto") ? 0 : intval($child_style->z_index);
+        $page->add_frame_to_stacking_context($child, $z_index);
+        $child_style->z_index = false;
+      }
+      
+      else {
+        $this->render($child);
+      }
+    }
       
     // Ends the overflow: hidden box
     if ( $style->overflow === "hidden" ) {
       $this->_canvas->clipping_end();
+    }
+
+    if ( $style->transform && is_array($style->transform) ) {
+      $this->_canvas->restore();
     }
 
     // Check for end frame callback

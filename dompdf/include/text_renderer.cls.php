@@ -45,7 +45,7 @@
  * - better accuracy on using different renderer as cpdf, added comments
  */
 
-/* $Id: text_renderer.cls.php 316 2010-09-16 21:26:31Z fabien.menager $ */
+/* $Id: text_renderer.cls.php 357 2011-01-30 20:56:46Z fabien.menager $ */
 /**
  * Renders text frames
  *
@@ -54,7 +54,7 @@
  */
 class Text_Renderer extends Abstract_Renderer {
   
-  const DECO_THICKNESS = 0.03;     // Thickness of underline. Screen: 0.08, print: better less, e.g. 0.04
+  const DECO_THICKNESS = 0.02;     // Thickness of underline. Screen: 0.08, print: better less, e.g. 0.04
 
   //Tweaking if $base and $descent are not accurate.
   //Check method_exists( $this->_canvas, "get_cpdf" )
@@ -91,7 +91,8 @@ class Text_Renderer extends Abstract_Renderer {
     $font = $style->font_family;
     $size = $frame_font_size = $style->font_size;
     $height = $style->height;    
-    $spacing = $frame->get_text_spacing() + $style->word_spacing;
+    $word_spacing = $frame->get_text_spacing() + $style->length_in_pt($style->word_spacing);
+    $char_spacing = $style->length_in_pt($style->letter_spacing);
     $width = $style->width;
 
     /*$text = str_replace(
@@ -102,7 +103,7 @@ class Text_Renderer extends Abstract_Renderer {
     
     $this->_canvas->text($x, $y, $text,
                          $font, $size,
-                         $style->color, $spacing);
+                         $style->color, $word_spacing, $char_spacing);
     
     $line = $frame->get_containing_line();
     
@@ -174,7 +175,8 @@ class Text_Renderer extends Abstract_Renderer {
     }
     
     if (DEBUG_LAYOUT && DEBUG_LAYOUT_LINES) {
-      $this->_debug_layout(array($x+$line["x"], $y, Font_Metrics::get_text_width($text, $font, $frame_font_size)+($line["wc"]-1)*$spacing, $frame_font_size), "orange", array(0, 2));
+      $text_width = Font_Metrics::get_text_width($text, $font, $frame_font_size);
+      $this->_debug_layout(array($x, $y, $text_width+($line["wc"]-1)*$word_spacing, $frame_font_size), "orange", array(0.5, 0.5));
     }
   }
 }

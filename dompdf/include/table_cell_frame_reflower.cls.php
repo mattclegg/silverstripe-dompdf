@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: table_cell_frame_reflower.cls.php 245 2010-04-07 19:51:51Z fabien.menager $ */
+/* $Id: table_cell_frame_reflower.cls.php 358 2011-01-30 22:22:47Z fabien.menager $ */
 
 
 /**
@@ -56,7 +56,7 @@ class Table_Cell_Frame_Reflower extends Block_Frame_Reflower {
 
   //........................................................................
 
-  function reflow() {
+  function reflow(Frame_Decorator $block = null) {
 
     $style = $this->_frame->get_style();
 
@@ -116,9 +116,7 @@ class Table_Cell_Frame_Reflower extends Block_Frame_Reflower {
         break;
     
       $child->set_containing_block($content_x, $content_y, $cb_w, $h);
-      $child->reflow();
-
-      $this->_frame->add_frame_to_line( $child );
+      $child->reflow($this->_frame);
 
     }
 

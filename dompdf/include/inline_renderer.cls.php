@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: inline_renderer.cls.php 313 2010-09-10 16:18:44Z fabien.menager $ */
+/* $Id: inline_renderer.cls.php 332 2010-11-27 14:06:34Z fabien.menager $ */
 
 /**
  * Renders inline frames
@@ -186,19 +186,21 @@ class Inline_Renderer extends Abstract_Renderer {
       $this->$method($x + $w, $y, $h, $bp["right"]["color"], $widths, "right");
     }
 
+    $node = $frame->get_node();
+    
     // Handle anchors & links
-    if ( $frame->get_node()->nodeName === "a" ) {
-      if ( $name = $frame->get_node()->getAttribute("name") )
+    if ( $node->nodeName === "a" ) {
+      if ( $name = $node->getAttribute("name") )
         $this->_canvas->add_named_dest($name);
 
-      if ( $href = $frame->get_node()->getAttribute("href") )
+      if ( $href = $node->getAttribute("href") )
         $this->_canvas->add_link($href, $x, $y, $w, $h);
     }
     
     if (DEBUG_LAYOUT && DEBUG_LAYOUT_INLINE) {
       $this->_debug_layout($child->get_border_box(), "blue");
       if (DEBUG_LAYOUT_PADDINGBOX) {
-        $this->_debug_layout($child->get_padding_box(), "blue", array(0, 1));
+        $this->_debug_layout($child->get_padding_box(), "blue", array(0.5, 0.5));
       }
     }
   }

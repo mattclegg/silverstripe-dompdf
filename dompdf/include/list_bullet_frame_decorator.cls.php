@@ -43,7 +43,7 @@
  * - bullet size proportional to font size, center position
  */
 
-/* $Id: list_bullet_frame_decorator.cls.php 216 2010-03-11 22:49:18Z ryan.masten $ */
+/* $Id: list_bullet_frame_decorator.cls.php 325 2010-11-07 18:05:59Z fabien.menager $ */
 
 /**
  * Decorates frames for list bullet rendering
@@ -79,15 +79,17 @@ class List_Bullet_Frame_Decorator extends Frame_Decorator {
 
   //hits only on "inset" lists items, to increase height of box
   function get_margin_height() {
-    return $this->_frame->get_style()->get_font_size()*self::BULLET_SIZE + 2 * self::BULLET_PADDING;
+    $style = $this->_frame->get_style();
+    if ( $style->list_style_type === 'none' ) return 0;
+    return $style->get_font_size() * self::BULLET_SIZE + 2 * self::BULLET_PADDING;
   }
 
   function get_width() {
-    return $this->_frame->get_style()->get_font_size()*self::BULLET_SIZE + 2 * self::BULLET_PADDING;
+    return $this->get_margin_height();
   }
   
   function get_height() {
-    return $this->_frame->get_style()->get_font_size()*self::BULLET_SIZE + 2 * self::BULLET_PADDING;
+    return $this->get_margin_height();
   }
   
   //........................................................................

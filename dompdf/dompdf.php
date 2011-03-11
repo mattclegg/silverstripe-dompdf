@@ -312,7 +312,7 @@ if ( $save_file ) {
 
   list($proto, $host, $path, $file) = explode_url($outfile);
   if ( $proto != "" ) // i.e. not file://
-	$outfile = $file; // just save it locally, FIXME? could save it like wget: ./host/basepath/file
+    $outfile = $file; // just save it locally, FIXME? could save it like wget: ./host/basepath/file
 
   $outfile = realpath(dirname($outfile)) . DIRECTORY_SEPARATOR . basename($outfile);
 

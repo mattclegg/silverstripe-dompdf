@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: table_frame_reflower.cls.php 246 2010-04-13 11:51:19Z fabien.menager $ */
+/* $Id: table_frame_reflower.cls.php 359 2011-02-05 12:15:06Z fabien.menager $ */
 
 /**
  * Reflows tables
@@ -90,11 +90,11 @@ class Table_Frame_Reflower extends Frame_Reflower {
 
     $width = $style->width;
 
-    // Calcluate padding & border fudge factor
+    // Calculate padding & border fudge factor
     $left = $style->margin_left;
     $right = $style->margin_right;
 
-    $left = $left === "auto" ? 0 : $style->length_in_pt($left, $cb["w"]);
+    $left  = $left  === "auto" ? 0 : $style->length_in_pt($left, $cb["w"]);
     $right = $right === "auto" ? 0 : $style->length_in_pt($right, $cb["w"]);
 
     $delta = $left + $right + $style->length_in_pt(array($style->padding_left,
@@ -375,11 +375,12 @@ class Table_Frame_Reflower extends Frame_Reflower {
   }
   //........................................................................
 
-  function reflow() {
-
+  function reflow(Frame_Decorator $block = null) {
+    $frame = $this->_frame;
+    
     // Check if a page break is forced
-    $page = $this->_frame->get_root();
-    $page->check_forced_page_break($this->_frame);
+    $page = $frame->get_root();
+    $page->check_forced_page_break($frame);
 
     // Bail if the page is full
     if ( $page->is_full() )
@@ -390,12 +391,11 @@ class Table_Frame_Reflower extends Frame_Reflower {
     // work because we may have an arbitrary number of block elements
     // inside tds.)
     $page->table_reflow_start();
-
     
     // Collapse vertical margins, if required
     $this->_collapse_margins();
 
-    $this->_frame->position();
+    $frame->position();
 
     // Table layout algorithm:
     // http://www.w3.org/TR/CSS21/tables.html#auto-table-layout
@@ -403,8 +403,8 @@ class Table_Frame_Reflower extends Frame_Reflower {
     if ( is_null($this->_state) )
       $this->get_min_max_width();
 
-    $cb = $this->_frame->get_containing_block();
-    $style = $this->_frame->get_style();
+    $cb = $frame->get_containing_block();
+    $style = $frame->get_style();
 
     // This is slightly inexact, but should be okay.  Add half the
     // border-spacing to the table as padding.  The other half is added to
@@ -415,9 +415,9 @@ class Table_Frame_Reflower extends Frame_Reflower {
       $v = $style->length_in_pt($v) / 2;
       $h = $style->length_in_pt($h) / 2;
 
-      $style->padding_left = $style->length_in_pt($style->padding_left, $cb["w"]) + $h;
-      $style->padding_right = $style->length_in_pt($style->padding_right, $cb["w"]) + $h;
-      $style->padding_top = $style->length_in_pt($style->padding_top, $cb["h"]) + $v;
+      $style->padding_left   = $style->length_in_pt($style->padding_left,   $cb["w"]) + $h;
+      $style->padding_right  = $style->length_in_pt($style->padding_right,  $cb["w"]) + $h;
+      $style->padding_top    = $style->length_in_pt($style->padding_top,    $cb["h"]) + $v;
       $style->padding_bottom = $style->length_in_pt($style->padding_bottom, $cb["h"]) + $v;
 
     }
@@ -446,7 +446,7 @@ class Table_Frame_Reflower extends Frame_Reflower {
     }
 
 
-    list($x, $y) = $this->_frame->get_position();
+    list($x, $y) = $frame->get_position();
 
     // Determine the content edge
     $content_x = $x + $left + $style->length_in_pt(array($style->padding_left,
@@ -461,7 +461,7 @@ class Table_Frame_Reflower extends Frame_Reflower {
       $h = null;
 
 
-    $cellmap = $this->_frame->get_cellmap();
+    $cellmap = $frame->get_cellmap();
     $col =& $cellmap->get_column(0);
     $col["x"] = $content_x;
 
@@ -471,7 +471,7 @@ class Table_Frame_Reflower extends Frame_Reflower {
     $cellmap->assign_x_positions();
 
     // Set the containing block of each child & reflow
-    foreach ( $this->_frame->get_children() as $child ) {
+    foreach ( $frame->get_children() as $child ) {
 
       // Bail if the page is full
       if ( !$page->in_nested_table() && $page->is_full() )
@@ -498,6 +498,10 @@ class Table_Frame_Reflower extends Frame_Reflower {
 
     // Debugging:
     //echo ($this->_frame->get_cellmap());
+    
+    if ( $block ) {
+      $block->add_frame_to_line($this->_frame);
+    }
   }
 
   //........................................................................

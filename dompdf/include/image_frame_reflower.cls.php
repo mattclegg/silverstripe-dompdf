@@ -44,7 +44,7 @@
  * - Time consuming additional image file scan only when really needed
  */
 
-/* $Id: image_frame_reflower.cls.php 305 2010-08-29 14:12:55Z fabien.menager $ */
+/* $Id: image_frame_reflower.cls.php 357 2011-01-30 20:56:46Z fabien.menager $ */
 
 /**
  * Image reflower class
@@ -58,21 +58,27 @@ class Image_Frame_Reflower extends Frame_Reflower {
     parent::__construct($frame);
   }
 
-  function reflow() {
+  function reflow(Frame_Decorator $block = null) {
+    $this->_frame->position();
+    
     //FLOAT
     //$frame = $this->_frame;
     //$page = $frame->get_root();
-    //if ($frame->get_style()->float !== "none" ) {
+    //if (DOMPDF_ENABLE_CSS_FLOAT && $frame->get_style()->float !== "none" ) {
     //  $page->add_floating_frame($this);
     //}
     // Set the frame's width
     $this->get_min_max_width();
+    
+    if ( $block ) {
+      $block->add_frame_to_line($this->_frame);
+    }
   }
 
   function get_min_max_width() {
     if (DEBUGPNG) {
       // Determine the image's size. Time consuming. Only when really needed?
-      list($img_width, $img_height) = getimagesize($this->_frame->get_image_url());
+      list($img_width, $img_height) = dompdf_getimagesize($this->_frame->get_image_url());
       print "get_min_max_width() ".
         $this->_frame->get_style()->width.' '.
         $this->_frame->get_style()->height.';'.
@@ -130,7 +136,8 @@ class Image_Frame_Reflower extends Frame_Reflower {
 
     if ($width == 0 || $height == 0) {
       // Determine the image's size. Time consuming. Only when really needed!
-      list($img_width, $img_height) = getimagesize($this->_frame->get_image_url());
+      list($img_width, $img_height) = dompdf_getimagesize($this->_frame->get_image_url());
+      
       // don't treat 0 as error. Can be downscaled or can be catched elsewhere if image not readable.
       // Resample according to px per inch
       // See also List_Bullet_Image_Frame_Decorator::__construct

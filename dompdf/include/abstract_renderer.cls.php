@@ -50,7 +50,7 @@
  *   - Do not create temporary files, but pass gd object directly
  */
 
-/* $Id: abstract_renderer.cls.php 313 2010-09-10 16:18:44Z fabien.menager $ */
+/* $Id: abstract_renderer.cls.php 361 2011-02-16 21:03:05Z fabien.menager $ */
 
 /**
  * Base renderer class
@@ -124,13 +124,13 @@ abstract class Abstract_Renderer {
     if ( $img === DOMPDF_LIB_DIR . "/res/broken_image.png" )
       return;
 
-	//Try to optimize away reading and composing of same background multiple times
-	//Postponing read with imagecreatefrom   ...()
-	//final composition paramters and name not known yet
-	//Therefore read dimension directly from file, instead of creating gd object first.
+    //Try to optimize away reading and composing of same background multiple times
+    //Postponing read with imagecreatefrom   ...()
+    //final composition paramters and name not known yet
+    //Therefore read dimension directly from file, instead of creating gd object first.
     //$img_w = imagesx($src); $img_h = imagesy($src);
 
-    list($img_w, $img_h) = getimagesize($img);
+    list($img_w, $img_h) = dompdf_getimagesize($img);
     if (!isset($img_w) || $img_w == 0 || !isset($img_h) || $img_h == 0) {
       return;
     }
@@ -138,8 +138,8 @@ abstract class Abstract_Renderer {
     $repeat = $style->background_repeat;
     $bg_color = $style->background_color;
 
-	//Increase background resolution and dependent box size according to image resolution to be placed in
-	//Then image can be copied in without resize
+    //Increase background resolution and dependent box size according to image resolution to be placed in
+    //Then image can be copied in without resize
     $bg_width = round((float)($width * DOMPDF_DPI) / 72);
     $bg_height = round((float)($height * DOMPDF_DPI) / 72);
 
@@ -189,7 +189,7 @@ abstract class Abstract_Renderer {
         $bg_x = 0;
       }
       if ($bg_width <= 0) {
-      	return;
+          return;
       }
       $width = (float)($bg_width * 72)/DOMPDF_DPI;
     } else {
@@ -217,7 +217,7 @@ abstract class Abstract_Renderer {
         $bg_y = 0;
       }
       if ($bg_height <= 0) {
-      	return;
+          return;
       }
       $height = (float)($bg_height * 72)/DOMPDF_DPI;
     } else {
@@ -244,80 +244,80 @@ abstract class Abstract_Renderer {
       $repeat = "no-repeat";
     }
 
-	//Use filename as indicator only
-	//different names for different variants to have different copies in the pdf
-	//This is not dependent of background color of box! .'_'.(is_array($bg_color) ? $bg_color["hex"] : $bg_color)
-	//Note: Here, bg_* are the start values, not end values after going through the tile loops!
+    //Use filename as indicator only
+    //different names for different variants to have different copies in the pdf
+    //This is not dependent of background color of box! .'_'.(is_array($bg_color) ? $bg_color["hex"] : $bg_color)
+    //Note: Here, bg_* are the start values, not end values after going through the tile loops!
 
-	$filedummy = $img;
+    $filedummy = $img;
 
     /* 
-    //Make shorter strings with limited characters for cache associative array index - needed?	
-	//Strip common base path - server root, explicite temp, default temp; remove unwanted characters;
-	$filedummy = strtr($filedummy,"\\:","//");
-	$p = strtr($_SERVER["DOCUMENT_ROOT"],"\\:","//");
-	$l = strlen($p);
-	if ( substr($filedummy,0,$l) == $p) {
-	  $filedummy = substr($filedummy,$l);
-	} else {
+    //Make shorter strings with limited characters for cache associative array index - needed?    
+    //Strip common base path - server root, explicite temp, default temp; remove unwanted characters;
+    $filedummy = strtr($filedummy,"\\:","//");
+    $p = strtr($_SERVER["DOCUMENT_ROOT"],"\\:","//");
+    $l = strlen($p);
+    if ( substr($filedummy,0,$l) == $p) {
+      $filedummy = substr($filedummy,$l);
+    } else {
       $p = strtr(DOMPDF_TEMP_DIR,"\\:","//");
-	  $l = strlen($p);
-	  if ( substr($filedummy,0,$l) == $p) {
-	    $filedummy = substr($filedummy,$l);
-	  } else {
+      $l = strlen($p);
+      if ( substr($filedummy,0,$l) == $p) {
+        $filedummy = substr($filedummy,$l);
+      } else {
         $p = strtr(sys_get_temp_dir(),"\\:","//");
-	    $l = strlen($p);
-	    if ( substr($filedummy,0,$l) == $p) {
-	      $filedummy = substr($filedummy,$l);
-	    }
-	  }
-	}
-	*/
-	
-	$filedummy .= '_'.$bg_width.'_'.$bg_height.'_'.$bg_x.'_'.$bg_y.'_'.$repeat;
+        $l = strlen($p);
+        if ( substr($filedummy,0,$l) == $p) {
+          $filedummy = substr($filedummy,$l);
+        }
+      }
+    }
+    */
+    
+    $filedummy .= '_'.$bg_width.'_'.$bg_height.'_'.$bg_x.'_'.$bg_y.'_'.$repeat;
     //debugpng
     //if (DEBUGPNG) print '<pre>[_background_image name '.$filedummy.']</pre>';
 
     //Optimization to avoid multiple times rendering the same image.
     //If check functions are existing and identical image already cached,
     //then skip creation of duplicate, because it is not needed by addImagePng
-	if ( method_exists( $this->_canvas, "get_cpdf" ) &&
-	     method_exists( $this->_canvas->get_cpdf(), "addImagePng" ) &&
-	     method_exists( $this->_canvas->get_cpdf(), "image_iscached" ) &&
-	     $this->_canvas->get_cpdf()->image_iscached($filedummy) ) {
-	  $bg = null;
+    if ( method_exists( $this->_canvas, "get_cpdf" ) &&
+         method_exists( $this->_canvas->get_cpdf(), "addImagePng" ) &&
+         method_exists( $this->_canvas->get_cpdf(), "image_iscached" ) &&
+         $this->_canvas->get_cpdf()->image_iscached($filedummy) ) {
+       $bg = null;
 
       //debugpng
       //if (DEBUGPNG) print '[_background_image skip]';
-
-	} else {
+    } 
+    
+    else {
 
     // Create a new image to fit over the background rectangle
     $bg = imagecreatetruecolor($bg_width, $bg_height);
+    
     //anyway default
-	//imagealphablending($img, true);
+    //imagealphablending($img, true);
 
     switch (strtolower($ext)) {
-
-    case "png":
-      $src = imagecreatefrompng($img);
-      break;
-
-    case "jpg":
-    case "jpeg":
-      $src = imagecreatefromjpeg($img);
-      break;
-
-    case "gif":
-      $src = imagecreatefromgif($img);
-      break;
-      
-    case "bmp":
-      $src = imagecreatefrombmp($img);
-      break;
-
-    default:
-      return; // Unsupported image type
+      case "png":
+        $src = imagecreatefrompng($img);
+        break;
+  
+      case "jpg":
+      case "jpeg":
+        $src = imagecreatefromjpeg($img);
+        break;
+  
+      case "gif":
+        $src = imagecreatefromgif($img);
+        break;
+        
+      case "bmp":
+        $src = imagecreatefrombmp($img);
+        break;
+  
+      default: return; // Unsupported image type
     }
 
     if ($src == null) {
@@ -329,9 +329,10 @@ abstract class Abstract_Renderer {
     //Transparent image: The image controls the transparency and lets shine through whatever background.
     //However on transparent imaage preset the composed image with the transparency color,
     //to keep the transparency when copying over the non transparent parts of the tiles.
-	$ti = imagecolortransparent($src);
-	if ($ti >= 0) {
-	  $tc = imagecolorsforindex($src,$ti);
+    $ti = imagecolortransparent($src);
+    
+    if ($ti >= 0) {
+      $tc = imagecolorsforindex($src,$ti);
       $ti = imagecolorallocate($bg,$tc['red'],$tc['green'],$tc['blue']);
       imagefill($bg,0,0,$ti);
       imagecolortransparent($bg, $ti);
@@ -355,13 +356,12 @@ abstract class Abstract_Renderer {
       $dst_y = $bg_y;
     }
 
-	//For historical reasons exchange meanings of variables:
-	//start_* will be the start values, while bg_* will be the temporary start values in the loops
+    //For historical reasons exchange meanings of variables:
+    //start_* will be the start values, while bg_* will be the temporary start values in the loops
     $start_x = $bg_x;
     $start_y = $bg_y;
 
     // Copy regions from the source image to the background
-
     if ( $repeat === "no-repeat" ) {
 
       // Simply place the image on the background
@@ -425,35 +425,41 @@ abstract class Abstract_Renderer {
           imagecopy($bg, $src, $dst_x, $dst_y, $src_x, $src_y, $w, $h);
         }
       }
-    } else {
- print 'Unknown repeat!';
-    }   
+    }
+    
+    else {
+      print 'Unknown repeat!';
+    }
+    
+    imagedestroy($src);
 
     } /* End optimize away creation of duplicates */
 
     //img: image url string
-	//img_w, img_h: original image size in px
-	//width, height: box size in pt
-	//bg_width, bg_height: box size in px
-	//x, y: left/top edge of box on page in pt
-	//start_x, start_y: placement of image relativ to pattern
-	//$repeat: repeat mode
-	//$bg: GD object of result image
-	//$src: GD object of original image
+    //img_w, img_h: original image size in px
+    //width, height: box size in pt
+    //bg_width, bg_height: box size in px
+    //x, y: left/top edge of box on page in pt
+    //start_x, start_y: placement of image relativ to pattern
+    //$repeat: repeat mode
+    //$bg: GD object of result image
+    //$src: GD object of original image
     //When using cpdf and optimization to direct png creation from gd object is available,
     //don't create temp file, but place gd object directly into the pdf
-	if ( method_exists( $this->_canvas, "get_cpdf" ) && method_exists( $this->_canvas->get_cpdf(), "addImagePng" ) ) {
-      //Note: CPDF_Adapter image converts y position
-	  $this->_canvas->get_cpdf()->addImagePng(
-	  		$filedummy,
-			$x, $this->_canvas->get_height() - $y - $height, $width, $height, $bg);
-	} else {
+    if ( method_exists( $this->_canvas, "get_cpdf" ) && 
+         method_exists( $this->_canvas->get_cpdf(), "addImagePng" ) ) {
+      // Note: CPDF_Adapter image converts y position
+      $this->_canvas->get_cpdf()->addImagePng($filedummy, $x, $this->_canvas->get_height() - $y - $height, $width, $height, $bg);
+    } 
+    
+    else {
       $tmp_file = tempnam(DOMPDF_TEMP_DIR, "bg_dompdf_img_").'.png';
       //debugpng
       if (DEBUGPNG) print '[_background_image '.$tmp_file.']';
 
       imagepng($bg, $tmp_file);
       $this->_canvas->image($tmp_file, "png", $x, $y, $width, $height);
+      imagedestroy($bg);
 
       //debugpng
       if (DEBUGPNG) print '[_background_image unlink '.$tmp_file.']';
@@ -461,6 +467,34 @@ abstract class Abstract_Renderer {
       if (!DEBUGKEEPTEMP)
         unlink($tmp_file);
     }
+  }
+  
+  protected function _get_dash_pattern($style, $width) {
+    $pattern = array();
+    
+    switch ($style) {
+      default:
+      /*case "solid":
+      case "double":
+      case "groove":
+      case "inset":
+      case "outset":
+      case "ridge":*/
+      case "none": break;
+      
+      case "dotted": 
+        if ( $width < 2 )
+          $pattern = array($width, 2);
+        else
+          $pattern = array($width);
+      break;
+      
+      case "dashed": 
+        $pattern = array(3 * $width);
+      break;
+    }
+    
+    return $pattern;
   }
 
   protected function _border_none($x, $y, $length, $color, $widths, $side, $corner_style = "bevel") {
@@ -471,11 +505,7 @@ abstract class Abstract_Renderer {
   protected function _border_dotted($x, $y, $length, $color, $widths, $side, $corner_style = "bevel") {
     list($top, $right, $bottom, $left) = $widths;
 
-    if ( $$side < 2 )
-      $dash = array($$side, 2);
-    else
-      $dash = array($$side);
-  
+    $pattern = $this->_get_dash_pattern("dotted", $$side);
     
     switch ($side) {
 
@@ -483,14 +513,14 @@ abstract class Abstract_Renderer {
       $delta = $top / 2;
     case "bottom":
       $delta = isset($delta) ? $delta : -$bottom / 2;
-      $this->_canvas->line($x, $y + $delta, $x + $length, $y + $delta, $color, $$side, $dash);
+      $this->_canvas->line($x, $y + $delta, $x + $length, $y + $delta, $color, $$side, $pattern);
       break;
 
     case "left":
       $delta = $left / 2;
     case "right":
       $delta = isset($delta) ? $delta : - $right / 2;
-      $this->_canvas->line($x + $delta, $y, $x + $delta, $y + $length, $color, $$side, $dash);
+      $this->_canvas->line($x + $delta, $y, $x + $delta, $y + $length, $color, $$side, $pattern);
       break;
 
     default:
@@ -503,20 +533,22 @@ abstract class Abstract_Renderer {
   protected function _border_dashed($x, $y, $length, $color, $widths, $side, $corner_style = "bevel") {
     list($top, $right, $bottom, $left) = $widths;
 
+    $pattern = $this->_get_dash_pattern("dashed", $$side);
+    
     switch ($side) {
 
     case "top":
       $delta = $top / 2;
     case "bottom":
       $delta = isset($delta) ? $delta : -$bottom / 2;
-      $this->_canvas->line($x, $y + $delta, $x + $length, $y + $delta, $color, $$side, array(3 * $$side));
+      $this->_canvas->line($x, $y + $delta, $x + $length, $y + $delta, $color, $$side, $pattern);
       break;
 
     case "left":
       $delta = $left / 2;
     case "right":
       $delta = isset($delta) ? $delta : - $right / 2;
-      $this->_canvas->line($x + $delta, $y, $x + $delta, $y + $length, $color, $$side, array(3 * $$side));
+      $this->_canvas->line($x + $delta, $y, $x + $delta, $y + $length, $color, $$side, $pattern);
       break;
 
     default:

@@ -49,9 +49,10 @@
  * - Add comments about configuration parameter implications
  */
 
-/* $Id: dompdf_config.inc.php 314 2010-09-14 11:35:41Z fabien.menager $ */
+/* $Id: dompdf_config.inc.php 363 2011-02-17 21:18:25Z fabien.menager $ */
 
-//error_reporting(E_STRICT | E_ALL);
+//error_reporting(E_STRICT | E_ALL | E_DEPRECATED);
+//ini_set("display_errors", 1);
 
 /**
  * The root of your DOMPDF installation
@@ -68,6 +69,8 @@ define("DOMPDF_INC_DIR", DOMPDF_DIR . "/include");
  */
 define("DOMPDF_LIB_DIR", DOMPDF_DIR . "/lib");
 
+
+
 /**
  * Some installations don't have $_SERVER['DOCUMENT_ROOT']
  * http://fyneworks.blogspot.com/2007/08/php-documentroot-in-iis-windows-servers.html
@@ -81,6 +84,11 @@ if( !isset($_SERVER['DOCUMENT_ROOT']) ) {
     $path = str_replace('\\\\', '\\', $_SERVER['PATH_TRANSLATED']);
     
   $_SERVER['DOCUMENT_ROOT'] = str_replace( '\\', '/', substr($path, 0, 0-strlen($_SERVER['PHP_SELF'])));
+}
+
+/** Include the custom config file if it exists */
+if ( file_exists(DOMPDF_DIR . "/dompdf_config.custom.inc.php") ){
+  require_once(DOMPDF_DIR . "/dompdf_config.custom.inc.php");
 }
 
 //FIXME: Some function definitions rely on the constants defined by DOMPDF. However, might this location prove problematic?
@@ -123,8 +131,6 @@ def("DOMPDF_FONT_DIR", DOMPDF_DIR . "/lib/fonts/");
  * This folder must already exist!
  * It contains the .afm files, on demand parsed, converted to php syntax and cached
  * This folder can be the same as DOMPDF_FONT_DIR
- *
- * *Please note the trailing slash.*
  */
 def("DOMPDF_FONT_CACHE", DOMPDF_FONT_DIR);
 
@@ -150,6 +156,7 @@ def("DOMPDF_TEMP_DIR", sys_get_temp_dir());
  * $dompdf = new DOMPDF();	$dompdf->load_html($htmldata); $dompdf->render(); $pdfdata = $dompdf->output();
  */
 def("DOMPDF_CHROOT", realpath(DOMPDF_DIR));
+//def("DOMPDF_CHROOT", "/home/makeitstokeontrentproperty.com/public_html/assets/private/");
 
 /**
  * Whether to use Unicode fonts or not.
@@ -162,7 +169,6 @@ def("DOMPDF_CHROOT", realpath(DOMPDF_DIR));
  *
  * When enabled, dompdf can support all Unicode glyphs.  Any glyphs used in a
  * document must be present in your fonts, however.
- *
  */
 def("DOMPDF_UNICODE_ENABLED", true);
 
@@ -253,7 +259,7 @@ def("DOMPDF_DEFAULT_PAPER_SIZE", "letter");
  * Used if no suitable fonts can be found. This must exist in the font folder.
  * @var string
  */
-def("DOMPDF_DEFAULT_FONT", "Vera");
+def("DOMPDF_DEFAULT_FONT", "serif");
 
 /**
  * Image DPI setting
@@ -332,14 +338,31 @@ def("DOMPDF_ENABLE_JAVASCRIPT", true);
  * @var bool
  */
 def("DOMPDF_ENABLE_REMOTE", false);
+
+/**
+ * The debug output log
+ * @var string
+ */
+def("DOMPDF_LOG_OUTPUT_FILE", DOMPDF_FONT_DIR."log.htm");
+
+/**
+ * A ratio applied to the fonts height to be more like browsers' line height
+ */
+def("DOMPDF_FONT_HEIGHT_RATIO", 1.1);
+
+/**
+ * Enable CSS float
+ *
+ * Allows people to disabled CSS float support
+ * @var bool
+ */
+def("DOMPDF_ENABLE_CSS_FLOAT", false);
  
 /**
  * DOMPDF autoload function
  *
  * If you have an existing autoload function, add a call to this function
  * from your existing __autoload() implementation.
- *
- * TODO: use spl_autoload(), if available
  *
  * @param string $class
  */
@@ -350,11 +373,59 @@ function DOMPDF_autoload($class) {
     require_once($filename);
 }
 
+// If SPL autoload functions are available (PHP >= 5.1.2)
 if ( function_exists("spl_autoload_register") ) {
+  $autoload = "DOMPDF_autoload";
+  $funcs = spl_autoload_functions();
+  
+  // No functions currently in the stack. 
+  if ( $funcs === false ) { 
+    spl_autoload_register($autoload); 
+  }
+  
+  // If PHP >= 5.3 the $prepend argument is available
+  else if ( version_compare(PHP_VERSION, '5.3', '>=') ) {
+    spl_autoload_register($autoload, true, true); 
+  }
+  
+  else {
+    // Unregister existing autoloaders... 
+    $compat = version_compare(PHP_VERSION, '5.1.2', '<=') && 
+              version_compare(PHP_VERSION, '5.1.0', '>=');
+              
+    foreach ($funcs as $func) { 
+      if (is_array($func)) { 
+        // :TRICKY: There are some compatibility issues and some 
+        // places where we need to error out 
+        $reflector = new ReflectionMethod($func[0], $func[1]); 
+        if (!$reflector->isStatic()) { 
+          throw new Exception('This function is not compatible with non-static object methods due to PHP Bug #44144.'); 
+        }
+        
+        // Suprisingly, spl_autoload_register supports the 
+        // Class::staticMethod callback format, although call_user_func doesn't 
+        if ($compat) $func = implode('::', $func); 
+      }
+      
+      spl_autoload_unregister($func); 
+    } 
+    
+    // Register the new one, thus putting it at the front of the stack... 
+    spl_autoload_register($autoload); 
+    
+    // Now, go back and re-register all of our old ones. 
+    foreach ($funcs as $func) { 
+      spl_autoload_register($func); 
+    }
+    
+    // Be polite and ensure that userland autoload gets retained
+    if ( function_exists("__autoload") ) {
+      spl_autoload_register("__autoload");
+    }
+  }
+}
 
-   spl_autoload_register("DOMPDF_autoload");
-
-} else if ( !function_exists("__autoload") ) {
+else if ( !function_exists("__autoload") ) {
   /**
    * Default __autoload() function
    *

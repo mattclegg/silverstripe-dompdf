@@ -44,7 +44,7 @@
  * - Add comments
  */
 
-/* $Id: font_metrics.cls.php 314 2010-09-14 11:35:41Z fabien.menager $ */
+/* $Id: font_metrics.cls.php 355 2011-01-27 07:44:54Z fabien.menager $ */
 
 require_once(DOMPDF_LIB_DIR . "/class.pdf.php");
 
@@ -121,8 +121,8 @@ class Font_Metrics {
    * @param float  $spacing word spacing, if any
    * @return float
    */
-  static function get_text_width($text, $font, $size, $spacing = 0) {
-    return self::$_pdf->get_text_width($text, $font, $size, $spacing);
+  static function get_text_width($text, $font, $size, $word_spacing = 0, $char_spacing = 0) {
+    return self::$_pdf->get_text_width($text, $font, $size, $word_spacing, $char_spacing);
   }
 
   /**

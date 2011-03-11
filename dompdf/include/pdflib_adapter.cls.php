@@ -42,7 +42,7 @@
  * - Clarify temp file name, optional debug output for temp file tracking
  */
 
-/* $Id: pdflib_adapter.cls.php 313 2010-09-10 16:18:44Z fabien.menager $ */
+/* $Id: pdflib_adapter.cls.php 355 2011-01-27 07:44:54Z fabien.menager $ */
 
 /**
  * PDF rendering interface
@@ -68,16 +68,6 @@ class PDFLib_Adapter implements Canvas {
    */
   static public $PAPER_SIZES = array(); // Set to
                                         // CPDF_Adapter::$PAPER_SIZES below.
-
-  /**
-   * Fudge factor to adjust reported font heights
-   *
-   * CPDF reports larger font heights than PDFLib.  This factor
-   * adjusts the height reported by get_font_height().
-   *
-   * @var float
-   */
-  const FONT_HEIGHT_SCALE = 1.2;
 
   /**
    * Whether to create PDFs in memory or on disk
@@ -548,7 +538,10 @@ class PDFLib_Adapter implements Canvas {
    * @param $mode
    */
   function set_opacity($opacity, $mode = "Normal") {
-    // Not implemented
+    if ( $mode === "Normal" ) {
+      $gstate = $this->_pdf->create_gstate("opacityfill=$opacity opacitystroke=$opacity");
+      $this->_pdf->set_gstate($gstate);
+    }
   }
 
   /**
@@ -626,7 +619,7 @@ class PDFLib_Adapter implements Canvas {
 
   function rectangle($x1, $y1, $w, $h, $color, $width, $style = null) {
     $this->_set_stroke_color($color);
-    $this->_set_line_style($width, "square", "miter", $style);
+    $this->_set_line_style($width, "butt", "", $style);
 
     $y1 = $this->y($y1) - $h;
 
@@ -656,6 +649,43 @@ class PDFLib_Adapter implements Canvas {
   
   function clipping_end() {
     $this->_pdf->restore();
+  }
+  
+  function save() {
+    $this->_pdf->save();
+  }
+  
+  function restore() {
+    $this->_pdf->restore();
+  }
+  
+  function rotate($angle, $x, $y) {
+    $pdf = $this->_pdf;
+    $pdf->translate($x, $this->_height-$y);
+    $pdf->rotate(-$angle);
+    $pdf->translate(-$x, -$this->_height+$y);
+  }
+  
+  function skew($angle_x, $angle_y, $x, $y) {
+    $pdf = $this->_pdf;
+    $pdf->translate($x, $this->_height-$y);
+    $pdf->skew($angle_y, $angle_x); // Needs to be inverted
+    $pdf->translate(-$x, -$this->_height+$y);
+  }
+  
+  function scale($s_x, $s_y, $x, $y) {
+    $pdf = $this->_pdf;
+    $pdf->translate($x, $this->_height-$y);
+    $pdf->scale($s_x, $s_y);
+    $pdf->translate(-$x, -$this->_height+$y);
+  }
+  
+  function translate($t_x, $t_y) {
+    $this->_pdf->translate($t_x, -$t_y);
+  }
+  
+  function transform($a, $b, $c, $d, $e, $f) {
+    $this->_pdf->concat($a, $b, $c, $d, $e, $f);
   }
 
   //........................................................................
@@ -731,7 +761,7 @@ class PDFLib_Adapter implements Canvas {
 
   //........................................................................
 
-  function text($x, $y, $text, $font, $size, $color = array(0,0,0), $adjust = 0, $angle = 0) {
+  function text($x, $y, $text, $font, $size, $color = array(0,0,0), $word_spacing = 0, $char_spacing = 0, $angle = 0) {
     $fh = $this->_load_font($font);
 
     $this->_pdf->setfont($fh, $size);
@@ -739,10 +769,11 @@ class PDFLib_Adapter implements Canvas {
 
     $y = $this->y($y) - Font_Metrics::get_font_height($font, $size);
 
-    $adjust = (float)$adjust;
-    $angle = -(float)$angle;
+    $word_spacing = (float)$word_spacing;
+    $char_spacing = (float)$char_spacing;
+    $angle        = -(float)$angle;
 
-    $this->_pdf->fit_textline($text, $x, $y, "rotate=$angle wordspacing=$adjust");
+    $this->_pdf->fit_textline($text, $x, $y, "rotate=$angle wordspacing=$word_spacing charspacing=$char_spacing ");
 
   }
 
@@ -800,12 +831,18 @@ class PDFLib_Adapter implements Canvas {
 
   //........................................................................
 
-  function get_text_width($text, $font, $size, $spacing = 0) {
+  function get_text_width($text, $font, $size, $word_spacing = 0, $letter_spacing = 0) {
     $fh = $this->_load_font($font);
 
     // Determine the additional width due to extra spacing
     $num_spaces = mb_substr_count($text," ");
-    $delta = $spacing * $num_spaces;
+    $delta = $word_spacing * $num_spaces;
+    
+    if ( $letter_spacing ) {
+      $num_chars = mb_strlen($text);
+      $delta += ($num_chars - $num_spaces) * $letter_spacing;
+    }
+    
     return $this->_pdf->stringwidth($text, $fh, $size) + $delta;
   }
 
@@ -821,7 +858,7 @@ class PDFLib_Adapter implements Canvas {
     $desc = $this->_pdf->get_value("descender", $fh);
 
     // $desc is usually < 0,
-    return self::FONT_HEIGHT_SCALE * $size * ($asc - $desc);
+    return $size * ($asc - $desc) * DOMPDF_FONT_HEIGHT_RATIO;
   }
 
   //........................................................................

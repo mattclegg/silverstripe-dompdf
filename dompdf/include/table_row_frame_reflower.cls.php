@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: table_row_frame_reflower.cls.php 216 2010-03-11 22:49:18Z ryan.masten $ */
+/* $Id: table_row_frame_reflower.cls.php 357 2011-01-30 20:56:46Z fabien.menager $ */
 
 /**
  * Reflows table rows
@@ -54,7 +54,7 @@ class Table_Row_Frame_Reflower extends Frame_Reflower {
 
   //........................................................................
 
-  function reflow() {
+  function reflow(Frame_Decorator $block = null) {
     $page = $this->_frame->get_root();
 
     if ( $page->is_full() )

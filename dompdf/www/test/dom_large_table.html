@@ -1800,7 +1800,7 @@ td.field_money {
 
 if ( isset($pdf) ) {
 
-  $font = Font_Metrics::get_font("verdana");;
+  $font = Font_Metrics::get_font("sans-serif");
   $size = 6;
   $color = array(0,0,0);
   $text_height = Font_Metrics::get_font_height($font, $size);
@@ -1843,7 +1843,7 @@ if ( isset($pdf) ) {
     // Mark the document as a duplicate if has been approved
     $watermark = $pdf->open_object();
     $pdf->text(110, $h - 240, "DUPLICATE", Font_Metrics::get_font("verdana", "bold"),
-               110, array(0.5, 0.5, 0.5), 0, -52, "Normal", 0.5);
+               110, array(0.5, 0.5, 0.5), 0, 0, -52);
 
     $text = "Approved: 2004-11-18";
     $width = Font_Metrics::get_text_width($text, $font, $size);
@@ -1869,6 +1869,7 @@ if ( isset($pdf) ) {
 <td style="width: 50%; text-align: right;">
 <h1 style="text-align: right">404-135 - Schedule A</h1>
 <span style="font-weight: bold; font-size: 0.7em;">APPROVED: 2004-11-18</span>
+</td>
 </tr>
 
 </table>
@@ -1876,7 +1877,7 @@ if ( isset($pdf) ) {
 <table class="detail" style="margin: 0px; border-top: none;">
 
 <tr>
-<td class="label">Job:
+<td class="label">Job:</td>
 <td class="field">404-135</td>
 <td class="label">Purchasers:</td>
 <td class="field">

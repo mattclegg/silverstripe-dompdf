@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: text_frame_decorator.cls.php 285 2010-07-20 11:35:03Z fabien.menager $ */
+/* $Id: text_frame_decorator.cls.php 356 2011-01-28 08:56:10Z fabien.menager $ */
 
 /**
  * Decorates Frame objects for text layout
@@ -75,10 +75,10 @@ class Text_Frame_Decorator extends Frame_Decorator {
       
   function get_text() {
     // FIXME: this should be in a child class (and is incorrect)
-    if ( $this->_frame->get_style()->content !== "normal" ) {
-      $this->_frame->get_node()->data = $this->_frame->get_style()->content;
-      $this->_frame->get_style()->content = "normal";
-    }
+//    if ( $this->_frame->get_style()->content !== "normal" ) {
+//      $this->_frame->get_node()->data = $this->_frame->get_style()->content;
+//      $this->_frame->get_style()->content = "normal";
+//    }
 
 //      pre_r("---");
 //      $style = $this->_frame->get_style();
@@ -130,11 +130,13 @@ class Text_Frame_Decorator extends Frame_Decorator {
 
   // Set method
   function set_text_spacing($spacing) {
-    $this->_text_spacing = $spacing;
-
     $style = $this->_frame->get_style();
+    
+    $this->_text_spacing = $spacing;
+    $char_spacing = $style->length_in_pt($style->letter_spacing);
+    
     // Re-adjust our width to account for the change in spacing
-    $style->width = Font_Metrics::get_text_width($this->get_text(), $style->font_family, $style->font_size, $spacing);
+    $style->width = Font_Metrics::get_text_width($this->get_text(), $style->font_family, $style->font_size, $spacing, $char_spacing);
   }
 
   //........................................................................
@@ -146,8 +148,9 @@ class Text_Frame_Decorator extends Frame_Decorator {
     $size = $style->font_size;
     $font = $style->font_family;
     $word_spacing = $style->length_in_pt($style->word_spacing);
+    $char_spacing = $style->length_in_pt($style->letter_spacing);
 
-    $style->width = Font_Metrics::get_text_width($text, $font, $size, $word_spacing);
+    return $style->width = Font_Metrics::get_text_width($text, $font, $size, $word_spacing, $char_spacing);
   }
   
   //........................................................................
@@ -181,6 +184,7 @@ class Text_Frame_Decorator extends Frame_Decorator {
     if ( $p instanceof Inline_Frame_Decorator )
       $p->split($deco);
 
+    return $deco;
   }
 
   //........................................................................

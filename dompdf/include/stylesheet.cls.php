@@ -48,7 +48,7 @@
  *   space for consistent parsing, in particular combined values like background
  */
 
-/* $Id: stylesheet.cls.php 311 2010-09-05 20:02:01Z fabien.menager $ */
+/* $Id: stylesheet.cls.php 360 2011-02-15 19:33:52Z fabien.menager $ */
 
 /**
  * The location of the default built-in CSS file.
@@ -68,71 +68,58 @@ define('__DEFAULT_STYLESHEET', DOMPDF_LIB_DIR . DIRECTORY_SEPARATOR . "res" . DI
  * @package dompdf
  */
 class Stylesheet {
-
-
-
+  
   /**
-   * the location of the default built-in CSS file.
-   *
+   * The location of the default built-in CSS file.
    */
-  const DEFAULT_STYLESHEET = __DEFAULT_STYLESHEET; // Hack: can't
-                                                   // concatenate stuff in
-                                                   // const declarations,
-                                                   // but I can do this?
-  // protected members
+  const DEFAULT_STYLESHEET = __DEFAULT_STYLESHEET; 
 
   /**
-   *  array of currently defined styles
-   *  @var array
+   * Array of currently defined styles
+   * @var array
    */
   private $_styles;
 
   /**
-   * base protocol of the document being parsed
-   *
+   * Base protocol of the document being parsed
    * Used to handle relative urls.
-   *
    * @var string
    */
   private $_protocol;
 
   /**
-   * base hostname of the document being parsed
-   *
+   * Base hostname of the document being parsed
    * Used to handle relative urls.
    * @var string
    */
   private $_base_host;
 
   /**
-   * base path of the document being parsed
-   *
+   * Base path of the document being parsed
    * Used to handle relative urls.
    * @var string
    */
   private $_base_path;
 
   /**
-   * the style defined by @page rules
-   *
+   * The style defined by @page rules
    * @var Style
    */
   private $_page_style;
 
   /**
-   * list of loaded files, used to prevent recursion
-   *
+   * List of loaded files, used to prevent recursion
    * @var array
    */
   private $_loaded_files;
 
   /**
-   * accepted CSS media types
+   * Accepted CSS media types
    * List of types and parsing rules for future extensions:
    * http://www.w3.org/TR/REC-html40/types.html
    *   screen, tty, tv, projection, handheld, print, braille, aural, all
    * The following are non standard extensions for undocumented specific environments.
-   *   static, visual, bitmap, paged
+   *   static, visual, bitmap, paged, dompdf
    * Note, even though the generated pdf file is intended for print output,
    * the desired content might be different (e.g. screen or projection view of html file).
    * Therefore allow specification of content by dompdf setting DOMPDF_DEFAULT_MEDIA_TYPE.
@@ -203,9 +190,16 @@ class Stylesheet {
    * @return string
    */
   function get_base_path() { return $this->_base_path; }
+  
+  /**
+   * Return the page style
+   *
+   * @return Style
+   */
+  function get_page_style() { return $this->_page_style; }
 
   /**
-   * add a new Style object to the stylesheet
+   * Add a new Style object to the stylesheet
    *
    * add_style() adds a new Style object to the current stylesheet, or
    * merges a new Style with an existing one.
@@ -245,7 +239,7 @@ class Stylesheet {
    * @param Style $parent The style of this style's parent in the DOM tree
    * @return Style
    */
-  function create_style($parent = null) {
+  function create_style(Style $parent = null) {
     return new Style($this, $parent);
   }
 
@@ -345,7 +339,7 @@ class Stylesheet {
    * @param string $selector
    * @return string
    */
-  private function _css_selector_to_xpath($selector) {
+  private function _css_selector_to_xpath($selector, $first_pass = false) {
 
     // Collapse white space and strip whitespace around delimiters
 //     $search = array("/\\s+/", "/\\s+([.>#+:])\\s+/");
@@ -354,6 +348,9 @@ class Stylesheet {
 
     // Initial query (non-absolute)
     $query = "//";
+    
+    // Will contain :before and :after if they must be created
+    $pseudo_elements = array();
 
     // Parse the selector
     //$s = preg_split("/([ :>.#+])/", $selector, -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -387,7 +384,7 @@ class Stylesheet {
         $c = $selector[$i];
         $c_prev = $selector[$i-1];
         
-        if ( in_array($c, $delimiters) && !$in_attr )
+        if ( !$in_attr && in_array($c, $delimiters) )
           break;
           
         if ( $c_prev === "[" ) {
@@ -476,13 +473,14 @@ class Stylesheet {
           $tok = "";
           break;
 
+        /* Pseudo-elements */
         case "before":
-          $query .= "*[@before]";
-          $tok = "";
-          break;
-
         case "after":
-          $query .= "*[@after]";
+          if ( $first_pass )
+            $pseudo_elements[$tok] = $tok;
+          else
+            $query .= "/*[@$tok]";
+            
           $tok = "";
           break;
 
@@ -490,12 +488,7 @@ class Stylesheet {
           $query .= "[not(*) and not(normalize-space())]";
           $tok = "";
           break;
-
-        case "disabled":
-          $query .= "[@disabled]";
-          $tok = "";
-          break;
-
+          
         case "disabled":
         case "checked":
           $query .= "[@$tok]";
@@ -637,7 +630,7 @@ class Stylesheet {
     if ( mb_strlen($query) > 2 )
       $query = rtrim($query, "/");
 
-    return $query;
+    return array("query" => $query, "pseudo_elements" => $pseudo_elements);
   }
 
   /**
@@ -665,13 +658,43 @@ class Stylesheet {
 
     $styles = array();
     $xp = new DOMXPath($tree->get_dom());
-
+    
+    // Add generated content
+    foreach ($this->_styles as $selector => $style) {
+      if (strpos($selector, ":before") === false && 
+          strpos($selector, ":after") === false) continue;
+      
+      $query = $this->_css_selector_to_xpath($selector, true);
+      
+      // Retrieve the nodes
+      $nodes = @$xp->query($query["query"]);
+      if ($nodes == null) {
+        record_warnings(E_USER_WARNING, "The CSS selector '$selector' is not valid", __FILE__, __LINE__);
+        continue;
+      }
+      
+      foreach ($nodes as $i => $node) {
+        foreach ($query["pseudo_elements"] as $pos) {
+          if (($src = $this->_image($style->content)) !== "none") {
+            $new_node = $node->ownerDocument->createElement("img_generated");
+            $new_node->setAttribute("src", $src);
+          }
+          else {
+            $new_node = $node->ownerDocument->createElement("dompdf_generated");
+          }
+          $new_node->setAttribute($pos, $pos);
+          
+          $tree->insert_node($node, $new_node, $pos);
+        }
+      }
+    }
+    
     // Apply all styles in stylesheet
     foreach ($this->_styles as $selector => $style) {
       $query = $this->_css_selector_to_xpath($selector);
 
       // Retrieve the nodes
-      $nodes = @$xp->query($query);
+      $nodes = @$xp->query($query["query"]);
       if ($nodes == null) {
         record_warnings(E_USER_WARNING, "The CSS selector '$selector' is not valid", __FILE__, __LINE__);
         continue;
@@ -723,6 +746,9 @@ class Stylesheet {
 
       // Locate any additional style attributes
       if ( ($str = $frame->get_node()->getAttribute("style")) !== "" ) {
+        // Destroy CSS comments
+        $str = preg_replace("'/\*.*?\*/'si", "", $str);
+        
         $spec = $this->_specificity("!style attribute");
         $styles[$id][$spec][] = $this->_parse_properties($str);
       }
@@ -899,6 +925,10 @@ class Stylesheet {
             $this->_page_style->merge($this->_parse_properties($match[5]));
           break;
 
+        case "font-face":
+          $this->_parse_font_face($match[5]);
+          break;
+          
         default:
           // ignore everything else
           break;
@@ -1006,6 +1036,30 @@ class Stylesheet {
       $this->_base_path = $path;
     }
 
+  }
+  
+  /**
+   * parse @font-face{} sections
+   * http://www.w3.org/TR/css3-fonts/#the-font-face-rule
+   * 
+   * @param string $str CSS @font-face rules
+   * @return Style
+   */
+  private function _parse_font_face($str) {
+    $descriptors = $this->_parse_properties($str);
+    
+    preg_match_all("/(url|local)\s*\([\"\']?([^\"\'\)]+)[\"\']?\)\s*(format\s*\([\"\']?([^\"\'\)]+)[\"\']?\))?/i", $descriptors->src, $src);
+    
+    $sources = array();
+    foreach($src[0] as $i => $value) {
+      $sources[] = array(
+        "local"  => strtolower($src[1][$i]) === "local",
+        "uri"    => $src[2][$i],
+        "format" => $src[4][$i],
+      );
+    }
+    
+    //@todo download font file, ttf2afm, etc
   }
 
   /**

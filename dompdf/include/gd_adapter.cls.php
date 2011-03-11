@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: gd_adapter.cls.php 301 2010-08-23 21:00:51Z fabien.menager $ */
+/* $Id: gd_adapter.cls.php 355 2011-01-27 07:44:54Z fabien.menager $ */
 
 /**
  * Image rendering interface
@@ -397,6 +397,53 @@ class GD_Adapter implements Canvas {
     imagefilledrectangle($this->_img, $x1, $y1, $x1 + $w, $y1 + $h, $c);
 
   }
+  
+  /**
+   * Starts a clipping rectangle at x1,y1 with width w and height h
+   *
+   * @param float $x1
+   * @param float $y1
+   * @param float $w
+   * @param float $h
+   */   
+  function clipping_rectangle($x1, $y1, $w, $h) {
+    // @todo
+  }
+  
+  /**
+   * Ends the last clipping shape
+   */  
+  function clipping_end() {
+    // @todo
+  }
+  
+  function save() {
+    // @todo
+  }
+  
+  function restore() {
+    // @todo
+  }
+  
+  function rotate($angle, $x, $y) {
+    // @todo
+  }
+  
+  function skew($angle_x, $angle_y, $x, $y) {
+    // @todo
+  }
+  
+  function scale($s_x, $s_y, $x, $y) {
+    // @todo
+  }
+  
+  function translate($t_x, $t_y) {
+    // @todo
+  }
+  
+  function transform($a, $b, $c, $d, $e, $f) {
+    // @todo
+  }
 
   /**
    * Draws a polygon
@@ -570,7 +617,7 @@ class GD_Adapter implements Canvas {
    * @param float $adjust word spacing adjustment
    * @param float $angle Text angle
    */
-  function text($x, $y, $text, $font, $size, $color = array(0,0,0), $adjust = 0, $angle = 0) {
+  function text($x, $y, $text, $font, $size, $color = array(0,0,0), $word_spacing = 0, $char_spacing = 0, $angle = 0) {
 
     // Scale by the AA factor
     $x *= $this->_aa_factor;
@@ -635,7 +682,7 @@ class GD_Adapter implements Canvas {
    * @param float  $spacing word spacing, if any
    * @return float
    */
-  function get_text_width($text, $font, $size, $spacing = 0) {    
+  function get_text_width($text, $font, $size, $word_spacing = 0, $char_spacing = 0) {    
 
     if ( strpos($font, '.ttf') === false )
       $font .= ".ttf";
@@ -660,7 +707,7 @@ class GD_Adapter implements Canvas {
 
     // FIXME: word spacing
     list(,$y2,,,,$y1) = imagettfbbox($size, 0, $font, "MXjpqytfhl");  // Test string with ascenders, descenders and caps
-    return $y2 - $y1;
+    return ($y2 - $y1) * DOMPDF_FONT_HEIGHT_RATIO;
   }
 
   
@@ -781,8 +828,7 @@ class GD_Adapter implements Canvas {
       break;
     }
 
-    $image = ob_get_contents();
-    ob_end_clean();
+    $image = ob_get_clean();
 
     if ( $this->_aa_factor != 1 )
       imagedestroy($dst);

@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: table_frame_decorator.cls.php 245 2010-04-07 19:51:51Z fabien.menager $ */
+/* $Id: table_frame_decorator.cls.php 317 2010-10-06 13:06:57Z fabien.menager $ */
 
 /**
  * Decorates Frames for table layout
@@ -131,7 +131,7 @@ class Table_Frame_Decorator extends Frame_Decorator {
    *
    * @param Frame $row
    */
-  function split($child = null) {
+  function split($child = null, $force_pagebreak = false) {
 
     if ( is_null($child) ) {
       parent::split();

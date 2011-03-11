@@ -37,7 +37,7 @@
 
  */
 
-/* $Id: canvas.cls.php 313 2010-09-10 16:18:44Z fabien.menager $ */
+/* $Id: canvas.cls.php 357 2011-01-30 20:56:46Z fabien.menager $ */
 
 /**
  * Main rendering interface
@@ -138,6 +138,41 @@ interface Canvas {
   function clipping_end();
   
   /**
+   * Save current state
+   */
+  function save();
+  
+  /**
+   * Restore last state
+   */
+  function restore();
+  
+  /**
+   * Rotate
+   */
+  function rotate($angle, $x, $y);
+  
+  /**
+   * Skew
+   */
+  function skew($angle_x, $angle_y, $x, $y);
+  
+  /**
+   * Scale
+   */
+  function scale($s_x, $s_y, $x, $y);
+  
+  /**
+   * Translate
+   */
+  function translate($t_x, $t_y);
+  
+  /**
+   * Transform
+   */
+  function transform($a, $b, $c, $d, $e, $f);
+  
+  /**
    * Draws a polygon
    *
    * The polygon is formed by joining all the points stored in the $points
@@ -206,9 +241,11 @@ interface Canvas {
    * @param string $font the font file to use
    * @param float $size the font size, in points
    * @param array $color
-   * @param float $adjust word spacing adjustment
+   * @param float $word_space word spacing adjustment
+   * @param float $char_space whar spacing adjustment
+   * @param float $angle angle
    */
-  function text($x, $y, $text, $font, $size, $color = array(0,0,0), $adjust = 0);
+  function text($x, $y, $text, $font, $size, $color = array(0,0,0), $word_space = 0, $char_space = 0, $angle = 0);
 
   /**
    * Add a named destination (similar to <a name="foo">...</a> in html)
@@ -245,7 +282,7 @@ interface Canvas {
    * @param float  $spacing word spacing, if any
    * @return float
    */
-  function get_text_width($text, $font, $size, $spacing = 0);
+  function get_text_width($text, $font, $size, $word_spacing = 0, $char_spacing = 0);
 
   /**
    * Calculates font height, in points

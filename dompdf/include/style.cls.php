@@ -70,7 +70,7 @@
  * - More accurate handling of css property cache consistency
  */
 
-/* $Id: style.cls.php 311 2010-09-05 20:02:01Z fabien.menager $ */
+/* $Id: style.cls.php 355 2011-01-27 07:44:54Z fabien.menager $ */
 
 /**
  * Represents CSS properties.
@@ -98,7 +98,22 @@ class Style {
    * @var float
    */
   static $default_line_height = 1.2;
-
+  
+  /**
+   * Default "absolute" font sizes relative to the default font-size
+   * http://www.w3.org/TR/css3-fonts/#font-size-the-font-size-property
+   * @var array<float>
+   */
+  static $font_size_keywords = array(
+    "xx-small" => 0.6,   // 3/5
+    "x-small"  => 0.75,  // 3/4
+    "small"    => 0.889, // 8/9
+    "medium"   => 1,     // 1
+    "large"    => 1.2,   // 6/5
+    "x-large"  => 1.5,   // 3/2
+    "xx-large" => 2.0,   // 2/1
+  );
+  
   /**
    * List of all inline types.  Should really be a constant.
    *
@@ -111,7 +126,14 @@ class Style {
    *
    * @var array
    */
-  static $BLOCK_TYPES = array("block","inline-block", "table-cell", "list-item");
+  static $BLOCK_TYPES = array("block", "inline-block", "table-cell", "list-item");
+  
+  /**
+   * List of all positionned types.  Should really be a constant.
+   *
+   * @var array
+   */
+  static $POSITIONNED_TYPES = array("relative", "absolute", "fixed");
 
   /**
    * List of all table types.  Should really be a constant.
@@ -178,6 +200,11 @@ class Style {
    * @var float
    */
   protected $_parent_font_size; // Font size of parent element
+  
+  /**
+   * @var Frame
+   */
+  protected $_frame;
   
   // private members
   /**
@@ -274,7 +301,7 @@ class Style {
       $d["max_width"] = "none";
       $d["min_height"] = "0";
       $d["min_width"] = "0";
-      $d["opacity"] = "1.0";
+      $d["opacity"] = "1.0"; // CSS3
       $d["orphans"] = "2";
       $d["outline_color"] = ""; // "invert" special color is not supported
       $d["outline_style"] = "none";
@@ -299,6 +326,7 @@ class Style {
       $d["quotes"] = "";
       $d["richness"] = "50";
       $d["right"] = "auto";
+      $d["size"] = "auto"; // @page
       $d["speak_header"] = "once";
       $d["speak_numeral"] = "continuous";
       $d["speak_punctuation"] = "none";
@@ -311,6 +339,10 @@ class Style {
       $d["text_indent"] = "0";
       $d["text_transform"] = "none";
       $d["top"] = "auto";
+      $d["transform"] = "none"; // CSS3
+      $d["transform_origin"] = "50% 50%"; // CSS3
+      $d["_webkit_transform"] = $d["transform"]; // CSS3
+      $d["_webkit_transform_origin"] = $d["transform_origin"]; // CSS3
       $d["unicode_bidi"] = "normal";
       $d["vertical_align"] = "baseline";
       $d["visibility"] = "visible";
@@ -321,6 +353,10 @@ class Style {
       $d["width"] = "auto";
       $d["word_spacing"] = "normal";
       $d["z_index"] = "auto";
+      
+      // for @font-face
+      $d["src"] = "";
+      $d["unicode_range"] = "";
 
       // Properties that inherit by default
       self::$_inherited = array("azimuth",
@@ -374,6 +410,14 @@ class Style {
    */
   function dispose() {
     clear_object($this);
+  }
+  
+  function set_frame(Frame $frame) {
+    $this->_frame = $frame;
+  }
+  
+  function get_frame() {
+    return $this->_frame;
   }
   
   /**
@@ -640,7 +684,7 @@ class Style {
       return;
     }
     
-    if ( $prop !== "content" && is_string($val) && mb_strpos($val, "url") === false ) {
+    if ( $prop !== "content" && is_string($val) && strlen($val) > 5 && mb_strpos($val, "url") === false ) {
       $val = mb_strtolower(trim(str_replace(array("\n", "\t"), array(" "), $val)));
       $val = preg_replace("/([0-9]+) (pt|px|pc|em|ex|in|cm|mm|%)/S", "\\1\\2", $val);
     }
@@ -788,37 +832,24 @@ class Style {
       $this->_parent_font_size = self::$default_font_size;
     
     switch ($fs) {
-      
     case "xx-small":
-      $fs = 3/5 * $this->_parent_font_size;
-      break;
-
     case "x-small":
-      $fs = 3/4 * $this->_parent_font_size;
+    case "small":
+    case "medium":
+    case "large":
+    case "x-large":
+    case "xx-large":
+      $fs = self::$default_font_size * self::$font_size_keywords[$fs];
       break;
 
     case "smaller":
-    case "small":
       $fs = 8/9 * $this->_parent_font_size;
       break;
-
-    case "medium":
-      $fs = $this->_parent_font_size;
-      break;
-
+      
     case "larger":
-    case "large":
       $fs = 6/5 * $this->_parent_font_size;
       break;
-
-    case "x-large":
-      $fs = 3/2 * $this->_parent_font_size;
-      break;
-
-    case "xx-large":
-      $fs = 2/1 * $this->_parent_font_size;
-      break;
-
+      
     default:
       break;
     }
@@ -850,6 +881,17 @@ class Style {
       return 0;
 
     return $this->_props["word_spacing"];
+  }
+
+  /**
+   * @link http://www.w3.org/TR/CSS21/text.html#propdef-letter-spacing
+   * @return float
+   */
+  function get_letter_spacing() {
+    if ( $this->_props["letter_spacing"] === "normal" )
+      return 0;
+
+    return $this->_props["letter_spacing"];
   }
 
   /**
@@ -1462,7 +1504,8 @@ class Style {
   function set_background($val) {
     $col = null;
     $pos = array();
-    $tmp = explode(" ", $val);
+    $tmp = preg_replace("/\s*\,\s*/", ",", $val); // when rgb() has spaces
+    $tmp = explode(" ", $tmp);
     $important = isset($this->_important_props["background"]);
     
     foreach($tmp as $attr) {
@@ -1669,7 +1712,8 @@ class Style {
    * @param string $border_spec  ([width] [style] [color])
    */
   protected function _set_border($side, $border_spec, $important) {
-    $border_spec = str_replace(",", " ", $border_spec);
+    $border_spec = preg_replace("/\s*\,\s*/", ",", $border_spec);
+    //$border_spec = str_replace(",", " ", $border_spec); // Why did we have this ?? rbg(10, 102, 10) > rgb(10  102  10)
     $arr = explode(" ", $border_spec);
 
     // FIXME: handle partial values
@@ -1761,6 +1805,7 @@ class Style {
       }
     }
     
+    $val = preg_replace("/\s*\,\s*/", ",", $val); // when rgb() has spaces
     $arr = explode(" ", $val);
     foreach ($arr as $value) {
       $value = trim($value);
@@ -1807,7 +1852,7 @@ class Style {
 
     //see __set and __get, on all assignments clear cache, not needed on direct set through __set
     $this->_prop_cache["border_spacing"] = null;
-    $this->_props["border_spacing"] = $arr[0] . " " . $arr[1];
+    $this->_props["border_spacing"] = "$arr[0] $arr[1]";
   }
 
   /**
@@ -1876,6 +1921,204 @@ class Style {
     //see __set and __get, on all assignments clear cache, not needed on direct set through __set
     $this->_prop_cache["list_style"] = null;
     $this->_props["list_style"] = $val;
+  }
+  
+  function set_size($val) {
+    $length_re = "/(\d+\s*(?:pt|px|pc|em|ex|in|cm|mm|%))/";
+
+    $val = mb_strtolower($val);
+    
+    if ( $val === "auto" ) {
+      return;
+    }
+        
+    $parts = preg_split("/\s+/", $val);
+    
+    $computed = array();
+    if ( preg_match($length_re, $parts[0]) ) {
+      $computed[] = $this->length_in_pt($parts[0]);
+      
+      if ( isset($parts[1]) && preg_match($length_re, $parts[1]) ) {
+        $computed[] = $this->length_in_pt($parts[1]);
+      }
+      else {
+        $computed[] = $computed[0];
+      }
+    }
+    elseif ( isset(CPDF_Adapter::$PAPER_SIZES[$parts[0]]) ) {
+      $computed = array_slice(CPDF_Adapter::$PAPER_SIZES[$parts[0]], 2, 2);
+      
+      if ( isset($parts[1]) && $parts[1] === "landscape" ) {
+        $computed = array_reverse($computed);
+      }
+    }
+    else {
+      return;
+    }
+    
+    $this->_props["size"] = $computed;
+  }
+  
+  /**
+   * Sets the CSS3 transform property
+   *
+   * @link http://www.w3.org/TR/css3-2d-transforms/#transform-property
+   * @param string $val
+   */
+  function set_transform($val) {
+    $number   = "\s*([^,\s]+)\s*";
+    $tr_value = "\s*([^,\s]+)\s*";
+    $angle    = "\s*([^,\s]+(?:deg|rad)?)\s*";
+    
+    if( !preg_match_all("/[a-z]+\([^\)]+\)/i", $val, $parts, PREG_SET_ORDER) ) {
+      return;
+    }
+    
+    $functions = array(
+      //"matrix"     => "\($number,$number,$number,$number,$number,$number\)",
+    
+      "translate"  => "\($tr_value(?:,$tr_value)?\)",
+      "translateX" => "\($tr_value\)",
+      "translateY" => "\($tr_value\)",
+    
+      "scale"      => "\($number(?:,$number)?\)",
+      "scaleX"     => "\($number\)",
+      "scaleY"     => "\($number\)",
+    
+      "rotate"     => "\($angle\)",
+    
+      "skew"       => "\($angle(?:,$angle)?\)",
+      "skewX"      => "\($angle\)",
+      "skewY"      => "\($angle\)",
+    );
+    
+    $transforms = array();
+    
+    foreach($parts as $part) {
+      $t = $part[0];
+      
+      foreach($functions as $name => $pattern) {
+        if (preg_match("/$name\s*$pattern/i", $t, $matches)) {
+          $values = array_slice($matches, 1);
+          
+          switch($name) {
+            // <angle> units
+            case "rotate":
+            case "skew":
+            case "skewX":
+            case "skewY":
+              
+              foreach($values as $i => $value) {
+                if ( strpos($value, "rad") ) 
+                  $values[$i] = rad2deg(floatval($value));
+                else
+                  $values[$i] = floatval($value);
+              }
+              
+              switch($name) {
+                case "skew":
+                  if ( !isset($values[1]) ) 
+                    $values[1] = 0;
+                break;
+                case "skewX":
+                  $name = "skew";
+                  $values = array($values[0], 0);
+                break;
+                case "skewY":
+                  $name = "skew";
+                  $values = array(0, $values[0]);
+                break;
+              }
+            break;
+            
+            // <translation-value> units
+            case "translate":
+              $values[0] = $this->length_in_pt($values[0], $this->width);
+              
+              if ( isset($values[1]) ) 
+                $values[1] = $this->length_in_pt($values[1], $this->height);
+              else
+                $values[1] = 0;
+            break;
+            
+            case "translateX":
+              $name = "translate";
+              $values = array($this->length_in_pt($values[0], $this->width), 0);
+            break;
+            
+            case "translateY":
+              $name = "translate";
+              $values = array(0, $this->length_in_pt($values[0], $this->height));
+            break;
+            
+            // <number> units
+            case "scale":
+              if ( !isset($values[1]) ) 
+                $values[1] = $values[0];
+            break;
+            
+            case "scaleX":
+              $name = "scale";
+              $values = array($values[0], 1.0);
+            break;
+            
+            case "scaleY":
+              $name = "scale";
+              $values = array(1.0, $values[0]);
+            break;
+          }
+          
+          $transforms[] = array(
+            $name, 
+            $values,
+          );
+        }
+      }
+    }
+    
+    //see __set and __get, on all assignments clear cache, not needed on direct set through __set
+    $this->_prop_cache["transform"] = null;
+    $this->_props["transform"] = $transforms;
+  }
+  
+  function set__webkit_transform($val) {
+    return $this->set_transform($val);
+  }
+  
+  function set__webkit_transform_origin($val) {
+    return $this->set_transform_origin($val);
+  }
+  
+  /**
+   * Sets the CSS3 transform-origin property
+   *
+   * @link http://www.w3.org/TR/css3-2d-transforms/#transform-origin
+   * @param string $val
+   */
+  function set_transform_origin($val) {
+    $values = preg_split("/\s+/", $val);
+    
+    if ( count($values) === 0) {
+      return;
+    }
+    
+    foreach($values as &$value) {
+      if ( in_array($value, array("top", "left")) ) {
+        $value = 0;
+      }
+      
+      if ( in_array($value, array("bottom", "right")) ) {
+        $value = "100%";
+      }
+    }
+    
+    if ( !isset($values[1]) ) {
+      $values[1] = $values[0];
+    }
+    
+    //see __set and __get, on all assignments clear cache, not needed on direct set through __set
+    $this->_prop_cache["transform_origin"] = null;
+    $this->_props["transform_origin"] = $values;
   }
 
   /**
