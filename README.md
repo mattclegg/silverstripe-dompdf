@@ -2,8 +2,6 @@
 
 http://code.google.com/p/dompdf/
 
-# PDF Generation via DOMPDF Library
-
 Input:
 
  * HTML string (which could be rendered template)
