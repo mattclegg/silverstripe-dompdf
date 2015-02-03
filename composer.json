@@ -1,0 +1,10 @@
+{
+    "name": "mattclegg/silverstripe-dompdf",
+    "authors": [
+        {
+            "name": "mattclegg",
+            "email": "cleggmatt@gmail.com"
+        }
+    ],
+    "require": {}
+}
