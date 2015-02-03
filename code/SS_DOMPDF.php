@@ -74,24 +74,33 @@ class SS_DOMPDF {
 	public $PluginDir         = '../dompdf/dompdf';
 
 
-  public function __construct() {
+	public function __construct() {
+
+		//require_once $this->PluginDir . "/load_font.php";
+		//install_font_family('helvetica');
+		require_once $this->PluginDir . "/include/functions.inc.php";
+		$this->Object=new DOMPDF();
+	}
   
-  	//require_once $this->PluginDir . "/load_font.php";
-  	//install_font_family('helvetica');
-	require_once $this->PluginDir . "/include/functions.inc.php";
-    $this->Object=new DOMPDF();
-    
-  }
+	public function load_html($data){
+		$this->Object->load_html($data);
+	}
+	public function load_html_file($filename){
+		$this->Object->load_html_file($filename);
+	}
   
-	public function load_html($data){$this->Object->load_html($data);}
-	public function load_html_file($filename){$this->Object->load_html_file($filename);}
-  
-	public function render(){$this->Object->render();}
-	public function output($options=null){return $this->Object->output($options);}
+	public function render(){
+		$this->Object->render();
+	}
+	public function output($options=null){
+		return $this->Object->output($options);
+	}
 	
-  public function set_paper($size, $orientation){
-  	$this->Object->set_paper($size, $orientation);
-  }
-  public function stream($outfile){return $this->Object->stream($outfile);}
-  
+	public function set_paper($size, $orientation){
+		$this->Object->set_paper($size, $orientation);
+	}
+	public function stream($outfile){
+		return $this->Object->stream($outfile);
+	}
+
 }

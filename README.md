@@ -13,6 +13,15 @@ Output
  * SS File
  * PDF binary stream to browser
 
+## Quickly getting started
+
+Find the ID number of a page (ie 1) and go to; /pdf/1
+
+Customize your tempalte by copying DefaultPDF to your theme directory.
+
+View raw output by going to; /pdf/1?show
+
+
 ## Example usage
 
 	$pdf = new SS_DOMPDF();
