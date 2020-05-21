@@ -1,6 +1,0 @@
----
-Name: dompdfroutes
----
-Director:
-  rules:
-    'pdf/$ID/$Action': 'DefaultPDFController'

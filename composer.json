@@ -2,9 +2,19 @@
     "name": "mattclegg/silverstripe-dompdf",
     "authors": [
         {
-            "name": "mattclegg",
-            "email": "cleggmatt@gmail.com"
+            "name": "Matthew Clegg",
+            "email": "m@cle.gg",
+            "homepage": "https://matthew.cle.gg"
         }
     ],
-    "require": {}
+    "require": {
+        "dompdf/dompdf": "^0.8",
+        "silverstripe/framework": "4.x-dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "MattClegg\\dompdf\\": "src/"
+        }
+    },
+    "minimum-stability": "dev"
 }
