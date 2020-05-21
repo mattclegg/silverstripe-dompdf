@@ -2,13 +2,11 @@
 
 namespace MattClegg\dompdf;
 
-use Dompdf\DOMPDF;
-
-error_reporting(E_ALL);
+use Dompdf\Dompdf;
 
 class SS_DOMPDF {
 	public function __construct() {
-		$this->Object = new DOMPDF([
+		$this->Object = new Dompdf([
 			'isRemoteEnabled' => true
 		]);
 	}
