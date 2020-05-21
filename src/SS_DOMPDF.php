@@ -30,4 +30,8 @@ class SS_DOMPDF {
 		return $this->Object->stream($filename, $options);
 	}
 
+	public function output($options = []){
+		$this->Object->render();
+		return $this->Object->output($options);
+	}
 }
